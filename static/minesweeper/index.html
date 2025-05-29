@@ -9,9 +9,23 @@
 </head>
 <body>
 
+<div class="container1">
+    <div class="heading">
+      <h1 class="title">Сапер</h1>
+      <div class="scores-container">
+        <div class="score-container"><span id="time">0</span></div>
+        <div class="best-container">-</div>
+      </div>
+    </div>
+</div>
   <div class="container">
+      <button type="button" class="difficultybutton1 js-generate-board-btn--easy">Легко</button>
+		<button type="button" class="difficultybutton2 js-generate-board-btn--medium">Средне</button>
+		<button type="button" class="difficultybutton3 js-generate-board-btn--hard">Сложно</button>
+		<button type="button" class="difficultybutton4 js-generate-board-btn--very-hard">Очень сложно</button>
     <div class="grid"></div>
-    <div>Flags left: <span id='flags-left'></span></div>
+    <div>🚩: <span id='flags-left'></span>
+    <button id="hint-btn">Подсказка</button></div>
     <div id="result"></div>
   </div>
 

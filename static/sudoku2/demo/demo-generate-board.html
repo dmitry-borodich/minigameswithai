@@ -10,13 +10,6 @@
 				-webkit-box-sizing: border-box;
 				box-sizing: border-box;
 			}
-			.wrap {
-				padding: 2em 1em;
-				width: 400px;
-				max-width: 100%;
-				margin-left: auto;
-				margin-right: auto;
-			}
 
 			@media(min-width: 30em){
 				.wrap{
@@ -33,25 +26,28 @@
 
 		</style>
 
-		<title>SudokuJS - demo with board generation</title>
 
-
-		<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+		<script type="text/javascript" src="../jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="../sudokuJS.js"></script>
 	</head>
 
 	<body>
-	<div class="wrap">
-		<h1>SudokuJS demo with board generation</h1>
 
-		<!--show candidates toggle-->
-		<label for="toggleCandidates">Show candidates </label><input id="toggleCandidates" class="js-candidate-toggle" type="checkbox"/>
-		<!--genrate board btns-->
-		New:
-		<button type="button" class="sudokubutton1 js-generate-board-btn--easy">Easy</button>
-		<button type="button" class="sudokubutton2 js-generate-board-btn--medium">Medium</button>
-		<button type="button" class="sudokubutton3 js-generate-board-btn--hard">Hard</button>
-		<button type="button" class="sudokubutton4 js-generate-board-btn--very-hard">Very Hard</button>
+		<div class="container1">
+    <div class="heading">
+      <h1 class="title">Судоку</h1>
+      <div class="scores-container">
+        <div class="score-container"><span id="time">0</span></div>
+        <div class="best-container">-</div>
+      </div>
+    </div>
+</div>
+<div class="container">
+
+		<button type="button" class="sudokubutton1 js-generate-board-btn--easy">Легко</button>
+		<button type="button" class="sudokubutton2 js-generate-board-btn--medium">Средне</button>
+		<button type="button" class="sudokubutton3 js-generate-board-btn--hard">Сложно</button>
+		<button type="button" class="sudokubutton4 js-generate-board-btn--very-hard">Очень сложно</button>
 
 
 		<!--the only required html-->
@@ -59,12 +55,15 @@
 		</div>
 
 		<!--solve buttons-->
-		Solve: <button type="button" class="sudokubutton5 js-solve-step-btn">One Step</button><button type="button" class="sudokubutton6 js-solve-all-btn">All</button>
-		<br>
-		<!--clear board btn-->
-		Clear: <button type="button" class="sudokubutton7 js-clear-board-btn">Board</button>
-	</div>
+        <button type="button" class="sudokubutton5 js-solve-step-btn">Решить один шаг</button><button type="button" class="sudokubutton6 js-solve-all-btn">Заполнить все</button>
+	        <br>
+    <label for="toggleCandidates" class="checkbox-label">
+	<input id="toggleCandidates" class="js-candidate-toggle" type="checkbox" />
+	Показать возможные варианты
+    </label>
 
+		<!--clear board btn-->
+    <button type="button" class="sudokubutton7 js-clear-board-btn">Очистить доску</button></div>
 	<script>
 		var	$candidateToggle = $(".js-candidate-toggle"),
 			$generateBoardBtnEasy = $(".js-generate-board-btn--easy"),
@@ -89,16 +88,20 @@
 		$clearBoardBtn.on("click", mySudokuJS.clearBoard);
 
 		$generateBoardBtnEasy.on("click", function(){
-			mySudokuJS.generateBoard("easy");
+            //mySudokuJS.setCurrentDifficulty("easy");
+            mySudokuJS.generateBoard("easy");
 		});
 		$generateBoardBtnMedium.on("click", function(){
+            //mySudokuJS.setCurrentDifficulty("medium");
 			mySudokuJS.generateBoard("medium");
 		});
 		$generateBoardBtnHard.on("click", function(){
+            //mySudokuJS.setCurrentDifficulty("hard");
 			mySudokuJS.generateBoard("hard");
 		});
 		$generateBoardBtnVeryHard.on("click", function(){
-			mySudokuJS.generateBoard("very hard");
+			mySudokuJS.generateBoard("veryHard");
+            //mySudokuJS.setCurrentDifficulty("veryHard");
 		});
 
 		$candidateToggle.on("change", function(){

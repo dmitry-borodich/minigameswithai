@@ -1,10 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Меню</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        .profile-icon {
+            transition: transform 0.3s ease;
+        }
+        .profile-icon:hover {
+            transform: scale(1.1);
+        }
+    </style>
 </head>
-<body>
-$END$
+<body class="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-600 text-white">
+    <!-- Навигационная панель -->
+    <nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <!-- Логотип и название -->
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('menu') }}" class="block">
+                    <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
+                </a>
+                <span class="hidden sm:block text-2xl font-extrabold tracking-tight animate__animated animate__fadeInLeft">MiniGames</span>
+            </div>
+                <!-- Навигационные вкладки -->
+                <div class="flex space-x-2 md:space-x-4">
+                    <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Магазин</a>
+                    <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
+                    <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
+                </div>
+                <!-- Профиль -->
+                <div class="flex items-center ml-4">
+                    <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
+                        <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
+                    </a>
+                    <span class="ml-2 text-lg font-bold text-white drop-shadow hidden sm:inline">{{ user }}</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- Основное содержимое, с отступом сверху под navbar -->
+    <div class="pt-20 pb-8 px-2 min-h-screen flex items-center justify-center">
+        <div class="w-full">
+            {% if show_welcome %}
+            <h1 class="animate__animated animate__fadeIn animate__delay-1s text-white text-3xl font-bold mb-8 text-center">
+                Добро пожаловать, {{ user }}!
+            </h1>
+            {% endif %}
+            <div class="space-y-2 animate__animated animate__fadeIn">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-8">
+                      <a href="{{ url_for('game2048') }}" class="group relative rounded-xl overflow-hidden shadow-lg transform hover:scale-105 transition aspect-square">
+                        <img src="{{ url_for('static', filename='icons/2048.png') }}" alt="2048" class="w-full h-full object-cover brightness-90 group-hover:brightness-110 transition" />
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">2048</div>
+                    </a>
+                    <a href="{{ url_for('sudoku') }}" class="group relative rounded-xl overflow-hidden shadow-lg transform hover:scale-105 transition aspect-square">
+                        <img src="static/icons/sudoku.png" alt="Судоку" class="w-full h-full object-cover brightness-90 group-hover:brightness-110 transition" />
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">Судоку</div>
+                    </a>
+                    <a href="{{ url_for('minesweeper') }}" class="group relative rounded-xl overflow-hidden shadow-lg transform hover:scale-105 transition aspect-square">
+                        <img src="static/icons/minesweeper.png" alt="Сапер" class="w-full h-full object-cover brightness-90 group-hover:brightness-110 transition" />
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">Сапер</div>
+                    </a>
+                    <a href="{{ url_for('puzzle15') }}" class="group relative rounded-xl overflow-hidden shadow-lg transform hover:scale-105 transition aspect-square">
+                        <img src="static/icons/15puzzle.png" alt="Пятнашки" class="w-full h-full object-cover brightness-90 group-hover:brightness-110 transition" />
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">Пятнашки</div>
+                    </a>
+                    <a href="{{ url_for('chess') }}" class="group relative rounded-xl overflow-hidden shadow-lg transform hover:scale-105 transition aspect-square">
+                        <img src="static/icons/chess.png" alt="Шахматы" class="w-full h-full object-cover brightness-90 group-hover:brightness-110 transition" />
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">Шахматы</div>
+                    </a>
+                    <a href="{{ url_for('checkers') }}" class="group relative rounded-xl overflow-hidden shadow-lg transform hover:scale-105 transition aspect-square">
+                        <img src="static/icons/checkers.png" alt="Шашки" class="w-full h-full object-cover brightness-90 group-hover:brightness-110 transition" />
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">Шашки</div>
+                    </a>
+                </div>
+                <a href="{{ url_for('logout') }}" onclick="handleLogout(event); return false;" class="block mt-6 text-sm underline text-center">Выйти</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        function handleLogout(event) {
+            event.preventDefault();
+            if (window.localStorage) {
+                localStorage.removeItem('15-puzzle-state');
+                localStorage.removeItem('gameState');
+                localStorage.removeItem('bestScore');
+                localStorage.removeItem('minesweeperBestTimes');
+                localStorage.removeItem('minesweeperGameState');
+                localStorage.removeItem('sudokuBestTimes');
+            }
+            window.location.href = event.target.href;
+        }
+    </script>
 </body>
 </html>

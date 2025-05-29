@@ -10,14 +10,14 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
 
-  this.setup();
+  this.setup(true);
 }
 
 // Restart the game
 GameManager.prototype.restart = function () {
   this.storageManager.clearGameState();
   this.actuator.continueGame(); // Clear the game won/lost message
-  this.setup();
+  this.setup(false);
 };
 
 // Keep playing after winning (allows going over 2048)
@@ -32,7 +32,7 @@ GameManager.prototype.isGameTerminated = function () {
 };
 
 // Set up the game
-GameManager.prototype.setup = function () {
+GameManager.prototype.setup = function (check_bestscore) {
   var previousState = this.storageManager.getGameState();
 
   // Reload the game from a previous game if present
@@ -53,6 +53,15 @@ GameManager.prototype.setup = function () {
     // Add the initial tiles
     this.addStartTiles();
   }
+
+  if(check_bestscore)
+  fetch('/get_high_score?game=2048')
+  .then(response => response.json())
+  .then(data => {
+    this.storageManager.setBestScore(data.high_score || 0);
+    this.actuate();
+  });
+
 
   // Update the actuator
   this.actuate();
@@ -77,8 +86,16 @@ GameManager.prototype.addRandomTile = function () {
 
 // Sends the updated grid to the actuator
 GameManager.prototype.actuate = function () {
-  if (this.storageManager.getBestScore() < this.score) {
-    this.storageManager.setBestScore(this.score);
+  var currentBestScore = this.storageManager.getBestScore();
+
+  if (this.score > currentBestScore) {
+  this.storageManager.setBestScore(this.score);
+
+  fetch('/update_score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `score=${this.score}&game=2048`
+  });
   }
 
   // Clear the state when the game is over (game over only, not win)
@@ -270,3 +287,130 @@ GameManager.prototype.tileMatchesAvailable = function () {
 GameManager.prototype.positionsEqual = function (first, second) {
   return first.x === second.x && first.y === second.y;
 };
+
+function scoreGrid(grid) {
+  return (
+    grid.availableCells().length * 10000 +
+    getSmoothness(grid) * 1000 +
+    getMonotonicity(grid) * 100 +
+    getMaxTile(grid)
+  );
+}
+
+function getSmoothness(grid) {
+  // Чем меньше разрывов между соседями — тем лучше
+  let smoothness = 0;
+  for (let x = 0; x < grid.size; x++) {
+    for (let y = 0; y < grid.size; y++) {
+      let tile = grid.cells[x][y];
+      if (!tile) continue;
+      let value = Math.log2(tile.value);
+      // Соседи справа и вниз
+      for (let d of [{dx: 1, dy: 0}, {dx: 0, dy: 1}]) {
+        let nx = x + d.dx, ny = y + d.dy;
+        if (nx < grid.size && ny < grid.size && grid.cells[nx][ny]) {
+          let neighborValue = Math.log2(grid.cells[nx][ny].value);
+          smoothness -= Math.abs(value - neighborValue);
+        }
+      }
+    }
+  }
+  return smoothness;
+}
+
+function getMonotonicity(grid) {
+  // Чем ровнее увеличиваются/уменьшаются значения по строкам/столбцам — тем лучше
+  let totals = [0, 0, 0, 0];
+  for (let x = 0; x < grid.size; x++) {
+    let current = 0;
+    let next = current + 1;
+    while (next < grid.size) {
+      while (next < grid.size && !grid.cells[x][next]) next++;
+      if (next >= grid.size) break;
+      let currentValue = grid.cells[x][current] ? Math.log2(grid.cells[x][current].value) : 0;
+      let nextValue = grid.cells[x][next] ? Math.log2(grid.cells[x][next].value) : 0;
+      if (currentValue > nextValue) {
+        totals[0] += nextValue - currentValue;
+      } else if (nextValue > currentValue) {
+        totals[1] += currentValue - nextValue;
+      }
+      current = next;
+      next++;
+    }
+  }
+  // Аналогично по столбцам (можно добавить)
+  return Math.max(totals[0], totals[1]);
+}
+
+function getMaxTile(grid) {
+  let max = 0;
+  grid.eachCell(function(x, y, tile){
+    if (tile && tile.value > max) max = tile.value;
+  });
+  return max;
+}
+
+function expectimax(grid, depth, isPlayerTurn) {
+  if (depth === 0 || !grid.cellsAvailable()) {
+    return scoreGrid(grid);
+  }
+
+  if (isPlayerTurn) {
+    // Ходы игрока
+    let max = -Infinity;
+    for (let dir = 0; dir < 4; dir++) {
+      let result = grid.testMove(dir);
+      if (!result.moved) continue;
+      let score = expectimax(result.grid, depth - 1, false);
+      if (score > max) max = score;
+    }
+    return max;
+  } else {
+    // Ходы случайной плитки (2 и 4)
+    let cells = grid.availableCells();
+    if (!cells.length) return scoreGrid(grid);
+
+    let totalScore = 0;
+    let count = 0;
+    for (let i = 0; i < cells.length; i++) {
+      // Для 2
+      let grid2 = grid.clone();
+      let tile2 = new Tile(cells[i], 2);
+      grid2.insertTile(tile2);
+      totalScore += 0.9 * expectimax(grid2, depth - 1, true);
+      count++;
+
+      // Для 4
+      let grid4 = grid.clone();
+      let tile4 = new Tile(cells[i], 4);
+      grid4.insertTile(tile4);
+      totalScore += 0.1 * expectimax(grid4, depth - 1, true);
+      count++;
+    }
+    return totalScore / (cells.length * (0.9+0.1)); // Нормируем на число ходов и вероятности
+  }
+}
+
+// Главная функция поиска лучшего хода через expectimax
+function findBestMoveExpectimax(grid, depth) {
+  let bestDir = -1, bestScore = -Infinity;
+  for (let dir = 0; dir < 4; dir++) {
+    let result = grid.testMove(dir);
+    if (!result.moved) continue;
+    let score = expectimax(result.grid, depth - 1, false);
+    if (score > bestScore) {
+      bestScore = score;
+      bestDir = dir;
+    }
+  }
+  return bestDir;
+}
+
+document.querySelector('.hint-btn').addEventListener('click', function() {
+  let bestMove = findBestMoveExpectimax(window.gameManager.grid, 5);
+  if (bestMove !== -1) {
+    window.gameManager.move(bestMove);
+  } else {
+    alert('Нет доступных ходов!');
+  }
+});

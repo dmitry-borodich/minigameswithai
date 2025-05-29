@@ -1,13 +1,118 @@
 ::selection {background: transparent;}
-p{margin: 0; font: 12px/150% Arial; text-align: center; color: #888;}
-p a{color: #888;}
+p {
+  margin: 0;
+  font: 12px/150% Arial;
+  text-align: center;
+  color: #888;
+}
+p a {color: #888;}
+
+@import url(static/2048/style/fonts/clear-sans.css);
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #776e65;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px; }
+
+body {
+  margin: 80px 0; }
+
+.heading:after {
+  content: "";
+  display: block;
+  clear: both; }
+
+h1.title {
+  font-size: 55px;
+  font-weight: bold;
+  margin: 0;
+  display: block;
+  float: left;
+
+}
+
+.container {
+  width: 500px;
+  margin: 10% auto;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+}
+.scores-container {
+  float: right;
+  text-align: right;
+}
+
+.score-container, .best-container {
+  position: relative;
+  display: inline-block;
+  background: #bbada0;
+  padding: 15px 25px;
+  font-size: 25px;
+  height: 25px;
+  line-height: 47px;
+  font-weight: bold;
+  border-radius: 3px;
+  color: white;
+  margin-top: 8px;
+  text-align: center; }
+  .score-container:after, .best-container:after {
+    position: absolute;
+    width: 100%;
+    top: 10px;
+    left: 0;
+    text-transform: uppercase;
+    font-size: 13px;
+    line-height: 13px;
+    text-align: center;
+    color: #eee4da; }
+  .score-container .score-addition, .best-container .score-addition {
+    position: absolute;
+    right: 30px;
+    color: red;
+    font-size: 25px;
+    line-height: 25px;
+    font-weight: bold;
+    color: rgba(119, 110, 101, 0.9);
+    z-index: 100;
+    -webkit-animation: move-up 600ms ease-in;
+    -moz-animation: move-up 600ms ease-in;
+    animation: move-up 600ms ease-in;
+    -webkit-animation-fill-mode: both;
+    -moz-animation-fill-mode: both;
+    animation-fill-mode: both; }
+
+.score-container:after {
+  content: "Счет"; }
+
+.best-container:after {
+  content: "Лучший"; }
+
+
+.above-game:after {
+  content: "";
+  display: block;
+  clear: both; }
+
+.game-intro {
+  float: left;
+  line-height: 42px;
+  margin-bottom: 0; }
+
 
 #controls{text-align: center;}
 #controls button{
 	cursor: pointer;
-	outline: none;	
+	outline: none;
 	padding: 10px 20px;
-	margin: 25px 2px;
+	margin: 5px 2px;
 	border: 0;
 	border-radius: 4px;
 	background: #001F1F;
@@ -24,7 +129,7 @@ p a{color: #888;}
 	width: 325px;
 	height: 325px;
 	margin: 0 auto;
-	margin-top: 80px;
+	margin-top: 20px;
 	border: 8px solid #001F1F;
 	border-radius: 4px;
 }
@@ -50,3 +155,31 @@ p a{color: #888;}
 	-webkit-transition: 0.15s left, 0.15s top;
  	transition: 0.15s left, 0.15s top;
 }
+
+#controls {
+  margin-top: 20px;
+  padding: 0 20px;
+}
+
+.controls-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.instruction {
+  font-size: 16px;
+  color: #333;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.win-overlay {
+    animation: fadeIn 1s ease-out;
+}
+
+
+

@@ -1,10 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>$Title$</title>
+  <title>Шашки</title>
+ <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #64b5f6, #4db6ac);
+      font-family: Arial, sans-serif;
+      color: #fff;
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+        min-height: 100vh;
+        position: relative;
+    }
+
+    #game-wrapper {
+      flex-grow: 1;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      padding: 10px;
+        flex: 1;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .profile-icon:hover, .menu-icon:hover {
+      transform: scale(1.1);
+    }
+
+    img {
+      display: block;
+    }
+  </style>
 </head>
 <body>
-$END$
+<nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <!-- Логотип и название -->
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('menu') }}" class="block">
+                    <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
+                </a>
+            </div>
+                <!-- Навигационные вкладки -->
+                <div class="flex space-x-2 md:space-x-4 ml-35">
+                    <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Магазин</a>
+                    <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
+                    <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
+                </div>
+                <!-- Профиль -->
+                <div class="flex items-center ml-4">
+                    <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
+                        <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
+                    </a>
+                    <span class="ml-2 text-lg font-bold text-white drop-shadow hidden sm:inline">{{ user }}</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+  <div id="game-wrapper">
+      <iframe src="{{ url_for('static', filename='checkers/index.html') }}"
+              title="Шашки"
+              allow="autoplay; fullscreen; gamepad"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-scripts allow-modals">
+      </iframe>
+  </div>
 </body>
 </html>

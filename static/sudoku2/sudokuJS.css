@@ -1,8 +1,3 @@
-/* sudokuJS v0.4.4 - CSS
-// https://github.com/pocketjoso/sudokuJS
-// Author: Jonas Ohlsson
-// License: MIT
-*/
 
 .sudoku-board {
 	min-height: 22.75rem;
@@ -13,8 +8,8 @@
 	.sudoku-board-cell {
 		display: inline-block;
 		position: relative;
-		border: 1px solid #ddd;
-		background: white;
+		border: 1px solid #6dbede;
+		background: #89c6e3;
 		max-width: 11.11111%;
 	}
 		/*rules for drawing the black lines dividing houses
@@ -140,3 +135,178 @@ background-color: #EDEDED;
 color: #040404;
 cursor: pointer;
 }
+
+[class^="sudokubutton"] {
+	background-color: #4a4e69;
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	padding: 8px 14px;
+	margin: 4px;
+	font-size: 0.95rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+[class^="sudokubutton"]:hover {
+	background-color: #22223b;
+	transform: scale(1.05);
+}
+
+.sudokubutton1 { background-color: #4caf50; }   /* зелёная */
+.sudokubutton2 { background-color: #ff9800; }   /* оранжевая */
+.sudokubutton3 { background-color: #f44336; }   /* красная */
+.sudokubutton4 { background-color: #333333; }   /* тёмная */
+.sudokubutton5 { background-color: #2196f3; }   /* синяя */
+.sudokubutton6 { background-color: #3f51b5; }   /* индиго */
+.sudokubutton7 { background-color: #9e9e9e; }   /* серая */
+
+
+.label-text {
+	font-family: "Segoe UI", sans-serif;
+	font-size: 0.95rem;
+	color: #333;
+	margin-right: 8px;
+}
+
+input[type="checkbox"] {
+	accent-color: #4a4e69;
+	transform: scale(1.2);
+	margin-right: 6px;
+	cursor: pointer;
+}
+
+.checkbox-label {
+	font-family: "Segoe UI", sans-serif;
+	font-size: 0.95rem;
+	color: #222;
+	cursor: pointer;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	margin: 4px 8px;
+}
+
+@import url(static/2048/style/fonts/clear-sans.css);
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #776e65;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px; }
+
+body {
+  margin: 80px 0; }
+
+.heading:after {
+  content: "";
+  display: block;
+  clear: both; }
+
+h1.title {
+  font-size: 55px;
+  font-weight: bold;
+  margin: 0 10%;
+  display: block;
+  float: left;
+
+}
+
+.container1 {
+  width: 550px;
+  margin: 1% auto;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+}
+.scores-container {
+  float: right;
+  text-align: right;
+}
+
+.score-container, .best-container {
+  position: relative;
+  display: inline-block;
+  background: #bbada0;
+  padding: 15px 25px;
+  font-size: 25px;
+  height: 54px;
+  line-height: 47px;
+  font-weight: bold;
+  border-radius: 3px;
+  color: white;
+  margin-top: 8px;
+  text-align: center; }
+  .score-container:after, .best-container:after {
+    position: absolute;
+    width: 100%;
+    top: 10px;
+    left: 0;
+    text-transform: uppercase;
+    font-size: 13px;
+    line-height: 13px;
+    text-align: center;
+    color: #eee4da; }
+
+.score-container:after {
+  content: "Время"; }
+
+.best-container:after {
+  content: "Лучшее"; }
+
+.above-game:after {
+  content: "";
+  display: block;
+  clear: both; }
+
+.game-intro {
+  float: left;
+  line-height: 42px;
+  margin-bottom: 0; }
+
+.container {
+  max-width: 100%;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.win-overlay {
+    animation: fadeIn 1s ease-out;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none; /* если нужно пропускать клики */
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+

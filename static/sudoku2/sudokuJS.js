@@ -1,8 +1,3 @@
-// sudokuJS v0.4.4
-// https://github.com/pocketjoso/sudokuJS
-// Author: Jonas Ohlsson
-// License: MIT
-
 (function (window, $, undefined) {
 	'use strict';
 	/*TODO:
@@ -10,7 +5,6 @@
 		toggle edit candidates
 		undo/redo
 	*/
-
 	/**
 	* Define a jQuery plugin
 	*/
@@ -23,7 +17,7 @@
 		var DIFFICULTY_EASY = "easy";
 		var DIFFICULTY_MEDIUM = "medium";
 		var DIFFICULTY_HARD = "hard";
-		var DIFFICULTY_VERY_HARD = "very hard";
+		var DIFFICULTY_VERY_HARD = "veryHard";
 
 		var SOLVE_MODE_STEP = "step";
 		var SOLVE_MODE_ALL = "all";
@@ -35,12 +29,25 @@
 			DIFFICULTY_VERY_HARD
 		];
 
+		  const timeDisplay = document.querySelector('#time');
+  		const bestContainer = document.querySelector('.best-container');
+		  let timer;
+		let seconds = 0;
+		let loadedBestTimes = {
+		easy: null,
+		medium: null,
+		hard: null,
+		veryHard: null
+	  };
+		loadBestTimesFromDB().then(updateBestTimeDisplay);
+
 		/*
 		 * variables
 		 *-----------*/
 		opts = opts || {};
 		var solveMode = SOLVE_MODE_STEP,
 				difficulty = "unknown",
+				currentDifficulty = "easy",
 				candidatesShowing = false,
 				editingCandidates = false,
 				boardFinished = false,
@@ -292,11 +299,6 @@
 			$boardInputs = $board.find("input");
 			$boardInputCandidates = $board.find(".candidates");
 
-            var HTMLSnippet = [
-        		'<a href="https://mczak.com/code/sudoku/" target="_blank">Sudoku HTML</a>'
-			].join('');
-			
-			$board.append(HTMLSnippet);
 
 
 		};
@@ -1289,11 +1291,17 @@
 			//log(i);
 			if(boardFinished) {
 				if(!gradingMode) {
+					clearInterval(timer);
 					updateUIBoard(false);
 					//log("finished!");
 					//log("usedStrats:")
 					//log(usedStrategies);
-
+					const overlay = document.querySelector('.game-overlay');
+					if (overlay) {
+					  overlay.style.opacity = '0';
+					  setTimeout(() => overlay.remove(), 300);
+					}
+					setTimeout(() => showGameOverOverlay(true), 100);
 					//callback
 					if(typeof opts.boardFinishedFn === "function"){
 						opts.boardFinishedFn({
@@ -1339,6 +1347,13 @@
 			} else if (boardError){
 				if(typeof opts.boardErrorFn === "function")
 					opts.boardErrorFn({msg: "Board incorrect"});
+				clearInterval(timer);
+				const overlay = document.querySelector('.game-overlay');
+					if (overlay) {
+					  overlay.style.opacity = '0';
+					  setTimeout(() => overlay.remove(), 300);
+					}
+				setTimeout(() => showGameOverOverlay(false), 100);
 
 				if(solveMode === SOLVE_MODE_ALL) {
 					updateUIBoard(false); //show user current state of board... how much they need to reset for it to work again.
@@ -1356,7 +1371,13 @@
 				//check if this finished the board
 				if(isBoardFinished()){
 					boardFinished = true;
-					//callback
+					clearInterval(timer);
+					const overlay = document.querySelector('.game-overlay');
+					if (overlay) {
+					  overlay.style.opacity = '0';
+					  setTimeout(() => overlay.remove(), 300);
+					}
+					setTimeout(() => showGameOverOverlay(true), 100);
 					if(typeof opts.boardFinishedFn === "function"){
 						opts.boardFinishedFn({
 							difficultyInfo: calcBoardDifficulty(usedStrategies)
@@ -1488,6 +1509,13 @@
 				if(isBoardFinished()){
 					boardFinished = true;
 					log("user finished board!");
+					clearInterval(timer);
+					const overlay = document.querySelector('.game-overlay');
+					if (overlay) {
+					  overlay.style.opacity = '0';
+					  setTimeout(() => overlay.remove(), 300);
+					}
+					setTimeout(() => showGameOverOverlay(true), 100);
 					if(typeof opts.boardFinishedFn === "function"){
 						opts.boardFinishedFn({
 							//we rate the board via what strategies was used to solve it
@@ -1660,9 +1688,9 @@
 			} else if(difficulty === DIFFICULTY_MEDIUM){
 				minGiven = 30;
 			}
-      if (boardSize < 9) {
-        minGiven = 4
-      }
+		  if (boardSize < 9) {
+			minGiven = 4
+		  }
 			for (var i=0; i < boardSize*boardSize; i++){
 				cells.push(i);
 			}
@@ -1691,6 +1719,14 @@
     // generates board puzzle, i.e. the answers for this round
     // requires that a board for boardSize has already been initiated
 		var generateBoard = function(diff, callback){
+			const overlay = document.querySelector('.game-overlay');
+		if (overlay) {
+		  overlay.style.opacity = '0';
+		  setTimeout(() => overlay.remove(), 300);
+		}
+		currentDifficulty = diff;
+		resetTimer();
+		loadBestTimesFromDB().then(updateBestTimeDisplay);
 			if($boardInputs)
 				clearBoard();
       if (contains(DIFFICULTIES, diff)) {
@@ -1729,6 +1765,7 @@
 			if(typeof callback === 'function'){
 				callback();
 			}
+			startTimer();
 		};
 
 
@@ -1737,8 +1774,10 @@
 		 *-----------*/
 		if(!opts.board) {
 			initBoard(opts);
-			generateBoard(opts);
+			generateBoard(currentDifficulty);
+			loadBestTimesFromDB().then(updateBestTimeDisplay);
 			renderBoard();
+			//таймер попробовать
 		} else {
 			board = opts.board;
 			initBoard();
@@ -1767,6 +1806,116 @@
 		/**
 		* PUBLIC methods
 		* ----------------- */
+		function resetTimer() {
+			clearInterval(timer);
+			seconds = 0;
+			timeDisplay.textContent = '0с';
+		  }
+
+		  function startTimer() {
+			if (timer) clearInterval(timer);
+			timer = setInterval(() => {
+			  seconds++;
+			  timeDisplay.textContent = `${seconds}с`;
+			}, 1000);
+		  }
+		  async function loadBestTimesFromDB() {
+		try {
+		  const response = await fetch('/get_best_times?game=sudoku');
+		  if (response.ok) {
+			const data = await response.json();
+			if (data) {
+			  // Сохраняем полученные рекорды в памяти
+			  loadedBestTimes.easy = data.easy !== null ? parseInt(data.easy) : null;
+			  loadedBestTimes.medium = data.medium !== null ? parseInt(data.medium) : null;
+			  loadedBestTimes.hard = data.hard !== null ? parseInt(data.hard) : null;
+			  loadedBestTimes.veryHard = data.veryHard !== null ? parseInt(data.veryHard) : null;
+
+			  // Обновляем localStorage только если там нет данных или данные устарели
+			  const localBestTimes = getBestTimes();
+			  let needUpdateLocalStorage = false;
+
+			  for (const difficulty in loadedBestTimes) {
+				if (loadedBestTimes[difficulty] !== null &&
+					(localBestTimes[difficulty] === null || loadedBestTimes[difficulty] < localBestTimes[difficulty])) {
+				  localBestTimes[difficulty] = loadedBestTimes[difficulty];
+				  needUpdateLocalStorage = true;
+				}
+			  }
+
+			  if (needUpdateLocalStorage) {
+				localStorage.setItem('sudokuBestTimes', JSON.stringify(localBestTimes));
+			  }
+			}
+		  }
+		} catch (error) {
+		  console.error('Error loading best times from DB:', error);
+		}
+
+		// Обновляем отображение рекордов после загрузки
+		updateBestTimeDisplay();
+	  }
+
+	  function updateBestTimeDisplay() {
+		const bestTimes = getBestTimes();
+		const bestTime = bestTimes[currentDifficulty];
+		bestContainer.textContent = bestTime !== null && bestTime !== undefined ? `${bestTime}с` : '-';
+	  }
+
+	  function getBestTimes() {
+		// Проверяем localStorage
+		const bestTimesStr = localStorage.getItem('sudokuBestTimes');
+		if (bestTimesStr) {
+		  return JSON.parse(bestTimesStr);
+		}
+
+		// Если в localStorage нет данных, используем загруженные из БД
+		return {
+		  easy: loadedBestTimes.easy,
+		  medium: loadedBestTimes.medium,
+		  hard: loadedBestTimes.hard,
+		  veryHard: loadedBestTimes.veryHard
+		};
+	  }
+
+	  function setBestTime() {
+		const bestTimes = getBestTimes();
+		if (bestTimes[currentDifficulty] === null || bestTimes[currentDifficulty] === undefined ||seconds < bestTimes[currentDifficulty]) {
+		  bestTimes[currentDifficulty] = seconds;
+		  localStorage.setItem('sudokuBestTimes', JSON.stringify(bestTimes));
+		  saveBestTimeToDB()
+    	updateBestTimeDisplay();
+		}
+	  }
+
+	 async function saveBestTimeToDB() {
+	  try {
+		const response = await fetch('/update_best_time', {
+		  method: 'POST',
+		  headers: { 'Content-Type': 'application/json' },
+		  body: JSON.stringify({
+			difficulty: currentDifficulty,
+			time: seconds,
+			game: 'sudoku'
+		  })
+		});
+		if (!response.ok) {
+		  log(`Server returned ${response.status}`);
+		}
+
+		// Обновляем локальные данные только после успешного сохранения
+		loadedBestTimes[currentDifficulty] = time;
+		return true;
+	  } catch (error) {
+		log('Save failed, storing locally:' + error);
+		// Сохраняем в localStorage для последующей синхронизации
+		const localTimes = JSON.parse(localStorage.getItem('sudokuBestTimes') || '{}');
+		localTimes[currentDifficulty] = time;
+		localStorage.setItem('sudokuBestTimes', JSON.stringify(localTimes));
+		return false;
+	  }
+	}
+
 		var solveAll = function(){
 			solveMode = SOLVE_MODE_ALL;
 			var canContinue = true;
@@ -1807,6 +1956,197 @@
 			editingCandidates = newVal;
 		};
 
+		var setCurrentDifficulty = function(difficulty){
+			currentDifficulty = difficulty;
+		};
+
+		function showGameOverOverlay(isWin) {
+		clearInterval(timer);
+		const grid = document.querySelector('.sudoku-board');
+		const cells = document.querySelectorAll('.sudoku-board-cell');
+
+		if (!cells.length) return; // Если нет ячеек, выходим
+
+		// Находим первую и последнюю ячейки
+		const firstCell = cells[0];
+		const lastCell = cells[cells.length - 1];
+
+		// Получаем их координаты
+		const firstCellRect = firstCell.getBoundingClientRect();
+		const lastCellRect = lastCell.getBoundingClientRect();
+
+		// Вычисляем общую ширину и высоту сетки
+		const gridWidth = lastCellRect.right - firstCellRect.left;
+		const gridHeight = lastCellRect.bottom - firstCellRect.top;
+
+		// Получаем позицию родительского контейнера
+		const container = grid.parentElement;
+		const containerRect = container.getBoundingClientRect();
+
+		// Создаем оверлей
+		const overlay = document.createElement('div');
+		overlay.className = 'game-overlay';
+		overlay.style.position = 'absolute';
+		overlay.style.top = `${grid.offsetTop}px`;
+		overlay.style.left = `${firstCellRect.left - containerRect.left}px`;
+		overlay.style.width = `${gridWidth}px`;
+		overlay.style.height = `${gridHeight}px`;
+		overlay.style.background = 'rgba(0, 0, 0, 0.7)';
+		overlay.style.display = 'flex';
+		overlay.style.alignItems = 'center';
+		overlay.style.justifyContent = 'center';
+		overlay.style.zIndex = '100';
+		overlay.style.opacity = '0';
+		overlay.style.transition = 'opacity 0.3s ease-out';
+		overlay.style.border = '10px solid #dcd6bc';
+		overlay.style.boxSizing = 'border-box';
+
+		// Контейнер сообщения
+		const box = document.createElement('div');
+		box.className = 'game-over-box';
+		box.style.background = isWin ? 'rgba(60, 191, 113, 0.95)' : 'rgba(255, 60, 60, 0.95)';
+		box.style.padding = '20px';
+		box.style.borderRadius = '8px';
+		box.style.textAlign = 'center';
+		box.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+		box.style.maxWidth = '80%';
+		box.style.transform = 'scale(0.9)';
+		box.style.transition = 'all 0.3s ease-out';
+		box.style.color = 'white';
+		box.style.fontFamily = '"Clear Sans", "Helvetica Neue", Arial, sans-serif';
+
+		// Текст сообщения
+		const msg = document.createElement('h2');
+		msg.innerText = isWin ? 'Поздравляем! Вы победили!' : 'Ошибки на поле!';
+		msg.style.margin = '0 0 20px 0';
+		msg.style.fontSize = '24px';
+		msg.style.fontWeight = 'bold';
+
+		// Иконка результата
+		const icon = document.createElement('div');
+		icon.style.fontSize = '40px';
+		icon.style.marginTop = '10px';
+		icon.style.lineHeight = '1';
+		icon.innerText = isWin ? '🏆' : '❌';
+
+		// Собираем элементы
+		box.appendChild(icon);
+		box.appendChild(msg);
+
+		// Добавляем информацию о времени только при победе
+		if (isWin) {
+		  const timeMsg = document.createElement('div');
+		  timeMsg.innerText = seconds === 0 ? `Ваше время: ${seconds}с  (не будет сохранено 😎)` : `Ваше время: ${seconds}с`;
+		  timeMsg.style.marginBottom = '20px';
+		  timeMsg.style.fontSize = '18px';
+		  box.appendChild(timeMsg);
+
+		  // Проверяем, является ли текущее время рекордом
+		  const bestTimes = getBestTimes();
+		  const currentBest = bestTimes[currentDifficulty];
+		  if (currentBest === null || seconds < currentBest) {
+			const bestMsg = document.createElement('div');
+			bestMsg.innerText = currentBest === null ?
+			  'Новый рекорд!' :
+			  `Новый рекорд! Предыдущий: ${currentBest}с`;
+			bestMsg.style.marginBottom = '20px';
+			bestMsg.style.fontSize = '18px';
+			bestMsg.style.fontWeight = 'bold';
+			box.appendChild(bestMsg);
+
+			// Сохраняем новый рекорд
+			  if(seconds === 0) {
+
+			  }
+			  else {
+				  setBestTime();
+			  }
+		  } else if (currentBest !== null) {
+			const bestMsg = document.createElement('div');
+			bestMsg.innerText = `Лучшее время: ${currentBest}с`;
+			bestMsg.style.marginBottom = '20px';
+			bestMsg.style.fontSize = '18px';
+			box.appendChild(bestMsg);
+		  }
+
+		} else {
+		  // При поражении можно закрыть оверлей кликом
+		  overlay.addEventListener('click', () => {
+			overlay.style.opacity = '0';
+			setTimeout(() => overlay.remove(), 300);
+		  });
+		}
+		  // Добавляем кнопку "Играть ещё" только при победе
+		  const playAgainBtn = document.createElement('button');
+		  playAgainBtn.innerText = 'Играть ещё';
+		  playAgainBtn.style.padding = '12px 24px';
+		  playAgainBtn.style.fontSize = '18px';
+		  playAgainBtn.style.cursor = 'pointer';
+		  playAgainBtn.style.background = 'rgba(255,255,255,0.2)';
+		  playAgainBtn.style.color = 'white';
+		  playAgainBtn.style.border = '2px solid white';
+		  playAgainBtn.style.borderRadius = '6px';
+		  playAgainBtn.style.transition = 'all 0.2s';
+		  playAgainBtn.style.marginTop = '0';
+		  playAgainBtn.style.fontFamily = '"Clear Sans", "Helvetica Neue", Arial, sans-serif';
+
+		  playAgainBtn.addEventListener('mouseover', () => {
+			  playAgainBtn.style.background = 'rgba(255,255,255,0.3)';
+		  });
+
+		  playAgainBtn.addEventListener('mouseout', () => {
+			  playAgainBtn.style.background = 'rgba(255,255,255,0.2)';
+		  });
+
+		  playAgainBtn.addEventListener('click', () => {
+			  overlay.style.opacity = '0';
+			  setTimeout(() => {
+				  overlay.remove();
+				  generateBoard(currentDifficulty);
+			  }, 300);
+		  });
+		box.appendChild(playAgainBtn);
+		overlay.appendChild(box);
+		container.appendChild(overlay);
+
+		// Анимация появления
+		setTimeout(() => {
+			overlay.style.opacity = '1';
+			box.style.transform = 'scale(1)';
+		}, 10);
+
+		// Закрытие по ESC
+		overlay.tabIndex = 0;
+		overlay.focus();
+		overlay.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				overlay.style.opacity = '0';
+				setTimeout(() => overlay.remove(), 300);
+			}
+		});
+
+		// Обработчик ресайза
+		const handleResize = () => {
+			const newFirstCellRect = firstCell.getBoundingClientRect();
+			const newLastCellRect = lastCell.getBoundingClientRect();
+			const newContainerRect = container.getBoundingClientRect();
+
+			overlay.style.top = `${grid.offsetTop}px`;
+			overlay.style.left = `${newFirstCellRect.left - newContainerRect.left}px`;
+			overlay.style.width = `${newLastCellRect.right - newFirstCellRect.left}px`;
+			overlay.style.height = `${newLastCellRect.bottom - newFirstCellRect.top}px`;
+		};
+
+		window.addEventListener('resize', handleResize);
+
+		// Удаляем обработчик при закрытии
+		const originalRemove = overlay.remove;
+		overlay.remove = function() {
+			window.removeEventListener('resize', handleResize);
+			originalRemove.call(this);
+		};
+	  }
+
 		return {
 			solveAll : solveAll,
 			solveStep : solveStep,
@@ -1817,7 +2157,8 @@
 			hideCandidates : hideCandidates,
 			showCandidates : showCandidates,
 			setEditingCandidates: setEditingCandidates,
-			generateBoard : generateBoard
+			generateBoard : generateBoard,
+			setCurrentDifficulty: setCurrentDifficulty
 		};
 	};
 

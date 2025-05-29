@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Судоку</title>
-    <link href="https://cdn.jsdelivr.net/npm/proto-sudoku-wc@0.1.43/dist/proto-sudoku-wc/props.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body {
             margin: 0;
@@ -21,6 +21,7 @@
 
         #game-wrapper {
             width: 100%;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -31,77 +32,89 @@
 
         #game-container {
             width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
+            max-width: 90vh;
+            height: 90vw;
+            max-height: 90vh;
         }
 
-        proto-sudoku-wc {
+        iframe {
             width: 100%;
             height: 100%;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            border: none;
+            background: transparent;
+            display: block;
         }
 
-        .profile-icon {
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 18px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
             position: absolute;
-            top: 20px;
-            right: 20px;
-            transition: transform 0.3s ease;
-        }
-        .profile-icon:hover {
-            transform: scale(1.1);
+            bottom: 20px;
+            z-index: 10;
         }
 
-        .menu-icon {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            transition: transform 0.3s ease;
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: #e1f5fe;
         }
-        .menu-icon:hover {
-            transform: scale(1.1);
+
+        @media (orientation: portrait) {
+            #game-container {
+                width: 90vw;
+                height: 90vw;
+            }
+        }
+
+        @media (orientation: landscape) {
+            #game-container {
+                width: 90vh;
+                height: 90vh;
+            }
         }
     </style>
 </head>
 <body>
-    <a href="{{ url_for('profile') }}" class="profile-icon">
-        <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="40">
-    </a>
-
+<nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <!-- Логотип и название -->
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('menu') }}" class="block">
+                    <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
+                </a>
+            </div>
+                <!-- Навигационные вкладки -->
+                <div class="flex space-x-2 md:space-x-4 ml-35">
+                    <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Магазин</a>
+                    <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
+                    <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
+                </div>
+                <!-- Профиль -->
+                <div class="flex items-center ml-4">
+                    <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
+                        <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
+                    </a>
+                    <span class="ml-2 text-lg font-bold text-white drop-shadow hidden sm:inline">{{ user }}</span>
+                </div>
+            </div>
+        </div>
+    </nav>
     <div id="game-wrapper">
         <div id="game-container">
-            <proto-sudoku-wc></proto-sudoku-wc>
+            <iframe src="{{ url_for('static', filename='sudoku2/demo/demo-generate-board.html') }}"
+                    title="Судоку"
+                    allow="autoplay; fullscreen; gamepad"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms">
+            </iframe>
         </div>
     </div>
-
-    <a href="{{ url_for('menu') }}" class="menu-icon">
-        <img src="{{ url_for('static', filename='icons/menu.png') }}" alt="Меню" width="35">
-    </a>
-
-    <!-- Полифил для Web Components -->
-    <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2.6.0/webcomponents-bundle.js"></script>
-
-    <!-- Подключение компонента (обычная версия, не ESM) -->
-    <script src="https://cdn.jsdelivr.net/npm/proto-sudoku-wc@0.1.43/dist/proto-sudoku-wc/proto-sudoku-wc.min.js"></script>
-
-    <!-- Инициализация компонента -->
-    <script>
-        document.addEventListener('WebComponentsReady', function() {
-            // Дополнительные настройки компонента, если нужны
-            const sudoku = document.querySelector('proto-sudoku-wc');
-
-            // Пример настройки (если компонент поддерживает параметры)
-            if (sudoku && sudoku.setDifficulty) {
-                sudoku.setDifficulty('easy');
-            }
-        });
-    </script>
-<iframe
-    src="https://sudoku.com/ru/"
-    width="600"
-    height="600"
-    style="border:none;"
-></iframe>
 </body>
 </html>

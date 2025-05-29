@@ -1,0 +1,330 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/chessboard-0.3.0.min.css" />
+    <script src="js/jquery-1.10.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/chess.min.js"></script>
+    <script src="js/chessboard-0.3.0.min.js"></script>
+    <title>Stockfish.js</title>
+      <style>
+      .container-custom {
+        background: transparent;
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        max-width: 900px;
+        width: 100%;
+      }
+      #board {
+        margin: 0 auto 20px;
+      }
+@import url(static/2048/style/fonts/clear-sans.css);
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #776e65;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px; }
+
+body {
+  margin: 80px 0; }
+
+.heading:after {
+  content: "";
+  display: block;
+  clear: both; }
+
+h1.title {
+  font-size: 55px;
+  font-weight: bold;
+  margin: 0 10%;
+  display: block;
+  float: left;
+
+}
+
+.container1 {
+  width: 650px;
+  margin: 1% auto;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+}
+.scores-container {
+  float: right;
+  text-align: right;
+    margin-right: 50px;
+}
+
+.score-container, .best-container {
+  min-width: 90px;
+  width: 90px;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  background: #bbada0;
+  padding: 15px 0;
+  font-size: 25px;
+  height: 55px;
+  line-height: 47px;
+  font-weight: bold;
+  border-radius: 3px;
+  color: white;
+  margin-top: 8px;
+  text-align: center; }
+  .score-container:after, .best-container:after {
+    position: absolute;
+    width: 100%;
+    top: 10px;
+    left: 0;
+    text-transform: uppercase;
+    font-size: 13px;
+    line-height: 13px;
+    text-align: center;
+    color: #eee4da; }
+
+.score-container:after {
+  content: "ELO"; }
+
+.best-container:after {
+  content: "Лучшее"; }
+
+
+#controls-container {
+width: 500px;
+  margin: 1% auto;
+}
+
+.promotion-btn {
+  width: 40px;
+  height: 40px;
+  padding: 5px;
+  margin-right: 3px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.promotion-btn img {
+  max-width: 100%;
+  height: auto;
+}
+
+#controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    max-width: 800px;
+  }
+
+  #controls-container > * {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  select, input[type="number"] {
+    padding: 5px;
+    font-size: 16px;
+    width: 80px;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    background: #337ab7;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .btn-group label {
+    padding: 6px 12px;
+    background: #337ab7;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .btn-group .active {
+    background: #23527c;
+  }
+
+  input[type="radio"] {
+    display: none;
+  }
+
+  .promotion-btn.selected {
+  border: 2px solid #007bff;
+}
+
+  .game-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.game-over-box {
+    background: rgba(60, 191, 113, 0.95);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    max-width: 80%;
+    transform: scale(0.9);
+    transition: all 0.3s ease-out;
+    color: white;
+    font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.game-over-box h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.game-overlay button {
+    padding: 12px 24px;
+    font-size: 18px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-top: 20px;
+    font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.game-overlay button:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+    </style>
+  </head>
+  <body>
+
+		<div class="container1">
+    <div class="heading">
+      <h1 class="title">Шахматы</h1>
+      <div class="scores-container">
+        <div class="score-container">0</div>
+        <div class="best-container">-</div>
+      </div>
+    </div>
+</div>
+        <div id="board" style="width: 500px"></div>
+        <div id="engineStatus" style="display:none;">...</div>
+  <div id="moves-container" style="display: none">
+    <h3>Moves:</h3>
+    <div id="pgn"></div>
+  </div>
+    <form class="form-horizontal">
+        <form class="form-horizontal">
+          <div class="form-group" style="display:none;">
+            <label for="timeBase" class="control-label col-xs-4 col-sm-6 col-md-4">Base time (min)</label>
+            <div class="col-xs-4 col-sm-6 col-md-4">
+              <input type="number" class="form-control" id="timeBase" value="5">
+            </div>
+          </div>
+          <div class="form-group" style="display:none;">
+            <label for="timeInc" class="control-label col-xs-4 col-sm-6 col-md-4">Increment (sec)</label>
+            <div class="col-xs-4 col-sm-6 col-md-4">
+              <input type="number" class="form-control" id="timeInc" value="2">
+            </div>
+          </div>
+          <div class="form-group" style="display: none">
+            <label for="showScore" class="control-label col-xs-4 col-sm-6 col-md-4">Show score</label>
+            <div class="col-xs-4 col-sm-6 col-md-4">
+              <input type="checkbox" class="form-control" id="showScore" checked>
+            </div>
+          </div>
+          <div id="controls-container">
+              <label for="skillLevel" style="margin-top:5px;">Уровень игры (400-2600)</label>
+            <div>
+              <input type="number" class="form-control" id="skillLevel" value="1200" step="100" min="400" max="2600">
+            </div>
+              <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active" id="color-white"><input type="radio" name="color">Белые</label>
+                <label class="btn btn-primary" id="color-black"><input type="radio" name="color">Черные</label>
+              </div>
+            <label for="color" style="margin-top:5px;">Превратить в</label>
+            <div id="promotion-choice">
+              <button class="promotion-btn selected" data-piece="q"><img src="img/chesspieces/wikipedia/wQ.png" alt="Queen"></button>
+              <button class="promotion-btn" data-piece="r"><img src="img/chesspieces/wikipedia/wR.png" alt="Rook"></button>
+              <button class="promotion-btn" data-piece="b"><img src="img/chesspieces/wikipedia/wB.png" alt="Bishop"></button>
+              <button class="promotion-btn" data-piece="n"><img src="img/chesspieces/wikipedia/wN.png" alt="Knight"></button>
+            </div>
+              <input type="hidden" id="promote" value="q">
+              <button type="button" class="btn btn-primary" onclick="newGame()">Начать игру</button>
+          </div>
+                </form>
+            </form>
+        </div>
+        <h5 style="display:none;">Evaluation</h5>
+        <pre id=evaluation style="display:none;"></pre>
+    <script src="enginegame.js"></script>
+    <script>
+      var wait_for_script;
+      var newGame = function (){};
+
+      function init()
+      {
+        var game = engineGame();
+        newGame = function newGame() {
+            var baseTime = parseFloat($('#timeBase').val()) * 60;
+            var inc = parseFloat($('#timeInc').val());
+            var skill = parseInt($('#skillLevel').val());
+            game.reset();
+            game.setTime(baseTime, inc);
+            game.setEloLevel(skill);
+            game.setPlayerColor($('#color-white').hasClass('active') ? 'white' : 'black');
+            game.setDisplayScore($('#showScore').is(':checked'));
+            game.start();
+        }
+
+        document.getElementById("skillLevel").addEventListener("change", function ()
+        {
+            game.setEloLevel(parseInt(this.value, 10));
+        });
+
+        newGame();
+      }
+
+      /// If we load Stockfish.js via a <script> tag, we need to wait until it loads.
+      if (!wait_for_script) {
+        document.addEventListener("DOMContentLoaded", init);
+      }
+
+      document.querySelectorAll('.promotion-btn').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const piece = this.getAttribute('data-piece');
+        document.getElementById('promote').value = piece;
+        document.querySelectorAll('.promotion-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+
+    </script>
+  </body>
+</html>

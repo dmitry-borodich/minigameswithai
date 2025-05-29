@@ -7,14 +7,24 @@
 	<link rel="stylesheet" href="15-puzzle.css">
 </head>
 <body>
-	<div id="puzzle"></div>
+
+<div class="container">
+    <div class="heading">
+      <h1 class="title">Пятнашки</h1>
+      <div class="scores-container">
+        <div class="score-container">0</div>
+        <div class="best-container">-</div>
+      </div>
+    </div>
+
 	<div id="controls">
-		<button id="solve">Solve</button>		
-		<button id="scramble">Scramble</button>
+		<button id="solve">Решить</button>
+		<button id="scramble">Перемешать</button>
+        <button id="hint-btn">Шаг решения</button>
 	</div>
-	
-	<p>Developed by Arnis Ritiņš</p>
-	<p><a href="https://github.com/arnisritins/15-Puzzle">View source code on GitHub</a></p>
+
+	<div id="puzzle"></div>
+
 
 	<script src="15-puzzle.js"></script>
 </body>
