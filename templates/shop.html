@@ -2,33 +2,139 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>AI Game Portal</title>
+    <title>Магазин</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-96 text-center animate-fade-in">
-        <h1 class="text-3xl font-bold mb-4">AI Game Portal</h1>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <p class="text-red-500 text-sm mb-3">{{ messages[0] }}</p>
-            {% else  %}
-                <p class="text-gray-600 mb-6">Войдите или играйте как гость, чтобы начать!</p>
-            {% endif %}
-        {% endwith %}
-        <a href="{{ url_for('login') }}" class="block w-full mb-3 bg-indigo-600 text-white py-2 rounded-xl hover:bg-indigo-700 transition">Войти / Зарегистрироваться</a>
-        <a href="{{ url_for('guest') }}" class="block w-full border border-indigo-600 text-indigo-600 py-2 rounded-xl hover:bg-indigo-100 transition">Играть как гость</a>
-    </div>
-
     <style>
-      .animate-fade-in {
-        animation: fade-in 1s ease forwards;
-      }
-      @keyframes fade-in {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(130deg, #a1c4fd 0%, #c2e9fb 100%);
+        }
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        @keyframes fadeInUp {
+            from {opacity:0; transform:translateY(30px);}
+            to {opacity:1; transform:translateY(0);}
+        }
     </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-400 to-purple-600 min-h-screen flex items-center justify-center">
+<nav class="w-full bg-white/10 shadow-md fixed top-0 left-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('menu') }}" class="block">
+                    <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
+                </a>
+            </div>
+            <div class="flex space-x-2 md:space-x-4 ml-35">
+                  <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold bg-indigo-600/80">Магазин</a>
+                <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Рекорды</a>
+                <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
+            </div>
+            <div class="flex items-center ml-4">
+                <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
+                    <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
+                </a>
+                <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ user }}</span>
+            </div>
+        </div>
+    </div>
+</nav>
 
+<div class="max-w-7xl mx-auto mt-32 fade-in px-4">
+    <div class="bg-white/90 rounded-3xl shadow-xl p-8 md:p-12">
+        <h1 class="text-3xl font-extrabold text-center text-indigo-800 mb-10">Магазин</h1>
+        <div class="mb-8 text-lg text-right text-indigo-800 font-bold">
+            Ваш баланс: <span class="text-indigo-900">9999</span>
+            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-6 mb-1" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <!-- Аватарки -->
+            <div>
+                <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Аватарки</h2>
+                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
+                    <!-- MOCKUP: Аватарка 1 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/cat.jfif') }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="Аватарка 1">
+                        <div class="font-semibold text-indigo-800 mb-1">Кот</div>
+                        <div class="mb-2 font-bold text-indigo-900">120
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                    <!-- MOCKUP: Аватарка 2 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/robot.jfif') }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="Аватарка 2">
+                        <div class="font-semibold text-indigo-800 mb-1">Робот</div>
+                        <div class="mb-2 font-bold text-indigo-900">150
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
+                    <!-- MOCKUP: Аватарка 3 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/dragon.jfif') }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="Аватарка 1">
+                        <div class="font-semibold text-indigo-800 mb-1">Дракон</div>
+                        <div class="mb-2 font-bold text-indigo-900">120
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Фоны профиля -->
+            <div>
+                <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Фоны профиля</h2>
+                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
+                    <!-- MOCKUP: Фон профиля 1 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/mountains.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 1">
+                        <div class="font-semibold text-indigo-800 mb-1">Горы</div>
+                        <div class="mb-2 font-bold text-indigo-900">200
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                    <!-- MOCKUP: Фон профиля 2 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/pixel art.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 2">
+                        <div class="font-semibold text-indigo-800 mb-1">Пиксель арт</div>
+                        <div class="mb-2 font-bold text-indigo-900">250
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Задние фоны -->
+            <div>
+                <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Задние фоны профиля</h2>
+                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
+                    <!-- MOCKUP: Задний фон 1 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/sun.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 3">
+                        <div class="font-semibold text-indigo-800 mb-1">Рассвет</div>
+                        <div class="mb-2 font-bold text-indigo-900">300
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                    <!-- MOCKUP: Задний фон 2 -->
+                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
+                        <img src="{{ url_for('static', filename='icons/ocean.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 4">
+                        <div class="font-semibold text-indigo-800 mb-1">Океан</div>
+                        <div class="mb-2 font-bold text-indigo-900">350
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

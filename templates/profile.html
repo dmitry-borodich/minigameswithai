@@ -20,7 +20,7 @@
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center">
-<nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
+<nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-2 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
             <!-- Логотип и название -->
@@ -40,7 +40,7 @@
                     <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
                         <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
                     </a>
-                    <span class="ml-2 text-lg font-bold text-white drop-shadow hidden sm:inline">{{ user.nickname }}</span>
+                    <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ user.nickname }}</span>
                 </div>
             </div>
         </div>
@@ -128,7 +128,7 @@
                 <div class="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl p-5 shadow text-center">
                     <div class="text-lg font-bold text-indigo-800 mb-2">Пятнашки</div>
                     <div class="text-2xl font-extrabold text-indigo-900">
-                        {{ records['15puzzle'] or '—' }}
+                        {{ records['15-puzzle'] or '—' }}
                     </div>
                 </div>
                 <div class="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl p-5 shadow text-center">
@@ -167,6 +167,29 @@
                         {% endfor %}
                     </div>
                 </div>
+        <div class="mt-12">
+    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Комментарии</h3>
+    <!-- Форма для нового комментария -->
+    <form method="POST" action="{{ url_for('add_comment', user_id=user.id) }}" class="flex flex-col sm:flex-row gap-3 mb-6 items-end">
+        <textarea name="comment_text" rows="2" class="w-full rounded-lg border border-indigo-300 p-3 text-indigo-900 focus:ring-2 focus:ring-indigo-400 transition" placeholder="Оставьте комментарий..." required></textarea>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold">Отправить</button>
+    </form>
+    <!-- Список комментариев -->
+    <div class="space-y-4 max-h-64 overflow-y-auto pr-2">
+        {% for comment in comments %}
+        <div class="bg-indigo-50/80 rounded-xl p-4 shadow flex flex-col">
+            <div class="flex items-center gap-2 mb-1">
+                <img src="{{ comment.author_avatar_url or url_for('static', filename='icons/user.png') }}" alt="аватар" class="h-8 w-8 rounded-full border border-indigo-200 bg-white" />
+                <span class="font-semibold text-indigo-800">{{ comment.author_nickname }}</span>
+                <span class="text-xs text-gray-500 ml-2">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+            <div class="text-indigo-900">{{ comment.text }}</div>
+        </div>
+        {% else %}
+        <div class="text-center text-gray-400">Пока нет комментариев.</div>
+        {% endfor %}
+    </div>
+</div>
             </div>
         </div>
     </div>

@@ -1,6 +1,10 @@
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import desc, asc
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
 import os
 
 load_dotenv()
@@ -10,6 +14,26 @@ app.secret_key = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'leepteen@gmail.com'
+app.config['MAIL_PASSWORD'] = 'qmbw iuru krmm gmlz'
+app.config['MAIL_DEFAULT_SENDER'] = 'leepteen@gmail.com'
+
+mail = Mail(app)
+
+s = URLSafeTimedSerializer(app.secret_key)
+
+def generate_confirmation_token(email):
+    return s.dumps(email, salt='email-confirm')
+def confirm_token(token, expiration=3600):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=expiration)
+    except Exception:
+        return False
+    return email
+
 db = SQLAlchemy(app)
 
 class User(db.Model):
@@ -17,6 +41,7 @@ class User(db.Model):
     nickname = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    confirmed = db.Column(db.Boolean, default=False)
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -26,6 +51,14 @@ class Score(db.Model):
     difficulty = db.Column(db.String(50))
 
     user = db.relationship('User', backref=db.backref('scores', lazy=True))
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # чей профиль
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # кто написал
+    text = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 with app.app_context():
     db.create_all()
@@ -76,16 +109,40 @@ def register():
 
         new_user = User(nickname=nickname, email=email, password=password)
         db.session.add(new_user)
-        user = User.query.filter_by(nickname=nickname).first()
-        user_2048score = Score(user_id=user.id, game_name='2048', high_score=0)
-        db.session.add(user_2048score)
         db.session.commit()
+        try:
+            token = generate_confirmation_token(email)
+            confirm_url = url_for('confirm_email', token=token, _external=True)
+            msg = Message(
+                subject="Подтверждение регистрации",
+                recipients=[email],
+                body=f'Здравствуйте, {nickname}!\nДля подтверждения регистрации перейдите по ссылке: {confirm_url}',
+                charset='utf-8'
+            )
+            mail.send(msg)
+        except Exception as e:
+            print("Ошибка при отправке письма:", e)
 
-        flash('Регистрация успешна. Войдите!', 'info')
+        flash('Подтвердите свою личность, перейдя по ссылке из письма, отправленого на почту', 'info')
         return redirect(url_for('login'))
 
     return render_template('register.html')
 
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    email = confirm_token(token)
+    if not email:
+        flash('Ссылка недействительна или истек срок действия.', 'error')
+        return redirect(url_for('login'))
+    user = User.query.filter_by(email=email).first()
+    if user and not user.confirmed:
+        user.confirmed = True
+        db.session.commit()
+        flash('Почта подтверждена! Теперь вы можете войти.', 'info')
+    else:
+        flash('Аккаунт уже подтверждён или не найден.', 'error')
+    return redirect(url_for('login'))
 @app.route('/guest')
 def guest():
     session['user'] = 'Гость'
@@ -113,7 +170,7 @@ def profile():
     user = User.query.filter_by(nickname=nickname).first()
 
     records = {}
-    for game in ['2048', '15puzzle', 'chess', 'checkers']:
+    for game in ['2048', '15-puzzle', 'chess', 'checkers']:
         score = Score.query.filter_by(user_id=user.id, game_name=game).first()
         records[game] = score.high_score if score else None
 
@@ -321,16 +378,78 @@ def checkers():
 
 @app.route('/shop')
 def shop():
-    return render_template('shop.html')
+    user = session.get('user', 'Гость')
+    return render_template('shop.html', user=user)
 
 @app.route('/records')
 def records():
-    return render_template('records.html')
+    top_n = 5  # Number of top scores to retrieve
+
+    server_records = {}
+
+    # Function to fetch top N scores for a game
+    def get_top_scores(game_name, difficulty=None, order=desc):
+        query = (
+            Score.query
+            .join(User, Score.user_id == User.id)
+            .filter(Score.game_name == game_name)
+        )
+        if difficulty:
+            query = query.filter(Score.difficulty == difficulty)
+
+        top_scores = (
+            query.order_by(order(Score.high_score))
+            .limit(top_n)
+            .all()
+        )
+        return [{"score": score.high_score, "user": score.user.nickname} for score in top_scores]
+
+    # Fetch top scores for single games
+    single_games = {'2048': desc, '15puzzle': asc, 'chess': desc, 'checkers': desc}
+    for game, order in single_games.items():
+        server_records[game] = get_top_scores(game, order=order)
+
+    # Fetch top scores for games with difficulties
+    difficulty_games = ['minesweeper', 'sudoku']
+    difficulties = ['easy', 'medium', 'hard', 'veryHard']
+    for game in difficulty_games:
+        server_records[game] = {}
+        for difficulty in difficulties:
+            server_records[game][difficulty] = get_top_scores(game, difficulty)
+
+    nickname = session.get('user', 'Гость')
+
+    return render_template('records.html', server_records=server_records, nickname=nickname)
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    user = session.get('user', 'Гость')
+    return render_template('about.html', user=user)
 
+
+@app.route('/profile/<int:user_id>/add_comment', methods=['POST'])
+def add_comment(user_id):
+    nickname = session.get('user')
+    if not nickname or nickname == 'Гость':
+        flash('Сначала войдите в аккаунт')
+        return redirect(url_for('index'))
+
+    current_user = User.query.filter_by(nickname=nickname).first()
+    text = request.form.get('comment_text')
+    if text:
+        comment = Comment(user_id=user_id, author_id=current_user.id, text=text)
+        db.session.add(comment)
+        db.session.commit()
+    return redirect(url_for('profile', user_id=user_id))
+
+@app.route('/profile/<int:user_id>')
+def profilebyid(user_id):
+    user = User.query.get_or_404(user_id)
+    comments = (
+        Comment.query.filter_by(user_id=user_id)
+        .order_by(Comment.created_at.desc())
+        .all()
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
