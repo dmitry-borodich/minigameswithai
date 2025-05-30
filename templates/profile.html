@@ -73,6 +73,7 @@
                 <div class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
                     {{ user['nickname'] }}
                 </div>
+                <a href="{{ url_for('logout') }}" onclick="handleLogout(event); return false;" class="block mt-6 text-sm underline text-center">Выйти</a>
                 <!-- <div class="text-gray-500 mt-1 text-sm">{{ user['email'] }}</div>-->
             </div>
         </div>
@@ -211,6 +212,18 @@
             editForm.classList.add('hidden');
             editBtn.classList.remove('hidden');
         };
+    }
+    function handleLogout(event) {
+        event.preventDefault();
+        if (window.localStorage) {
+            localStorage.removeItem('15-puzzle-state');
+            localStorage.removeItem('gameState');
+            localStorage.removeItem('bestScore');
+            localStorage.removeItem('minesweeperBestTimes');
+            localStorage.removeItem('minesweeperGameState');
+            localStorage.removeItem('sudokuBestTimes');
+        }
+        window.location.href = event.target.href;
     }
 </script>
 </body>

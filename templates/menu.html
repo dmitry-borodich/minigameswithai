@@ -77,23 +77,9 @@
                         <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-2 font-semibold text-lg">Шашки</div>
                     </a>
                 </div>
-                <a href="{{ url_for('logout') }}" onclick="handleLogout(event); return false;" class="block mt-6 text-sm underline text-center">Выйти</a>
             </div>
         </div>
     </div>
-    <script>
-        function handleLogout(event) {
-            event.preventDefault();
-            if (window.localStorage) {
-                localStorage.removeItem('15-puzzle-state');
-                localStorage.removeItem('gameState');
-                localStorage.removeItem('bestScore');
-                localStorage.removeItem('minesweeperBestTimes');
-                localStorage.removeItem('minesweeperGameState');
-                localStorage.removeItem('sudokuBestTimes');
-            }
-            window.location.href = event.target.href;
-        }
-    </script>
+
 </body>
 </html>

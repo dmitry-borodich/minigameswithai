@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc, asc
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
+from flask_migrate import Migrate
 import os
 
 load_dotenv()
@@ -35,6 +36,7 @@ def confirm_token(token, expiration=3600):
     return email
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)

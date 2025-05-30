@@ -55,15 +55,14 @@
 		</div>
 
 		<!--solve buttons-->
-        <button type="button" class="sudokubutton5 js-solve-step-btn">Решить один шаг</button><button type="button" class="sudokubutton6 js-solve-all-btn">Заполнить все</button>
-	        <br>
+        <button type="button" class="sudokubutton5 js-solve-step-btn">Решить один шаг</button><button type="button" class="sudokubutton6 js-solve-all-btn" style="display:none;">Заполнить все</button>
     <label for="toggleCandidates" class="checkbox-label">
 	<input id="toggleCandidates" class="js-candidate-toggle" type="checkbox" />
 	Показать возможные варианты
     </label>
 
 		<!--clear board btn-->
-    <button type="button" class="sudokubutton7 js-clear-board-btn">Очистить доску</button></div>
+    <button type="button" class="sudokubutton7 js-clear-board-btn" style="display:none;">Очистить доску</button></div>
 	<script>
 		var	$candidateToggle = $(".js-candidate-toggle"),
 			$generateBoardBtnEasy = $(".js-generate-board-btn--easy"),
