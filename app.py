@@ -241,7 +241,7 @@ def update_score():
         if game == '15-puzzle':
             if score < existing_score.high_score:
                 existing_score.high_score = score
-        elif game == '2048' or game == 'chess':
+        elif game == '2048' or game == 'chess' or game == 'checkers':
             if score > existing_score.high_score:
                 existing_score.high_score = score
 

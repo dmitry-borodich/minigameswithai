@@ -181,12 +181,12 @@ var gameBoard = [
     return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
   }
 
-  var skill = 5;
+  var skill = 7;
   const bestContainer = document.querySelector('.best-container');
   const scoreContainer = document.querySelector('.score-container');
 
   fetchBestScore();
-  scoreContainer.textContent = skill;
+  scoreContainer.textContent = skill-2;
   //Piece object - there are 24 instances of them in a checkers game
   function Piece(element, position) {
     // when jump exist, regular move is not allowed

@@ -15,7 +15,7 @@
 <body>
 <div class="container1">
     <div class="heading">
-      <h1 class="title">Шашки</h1>
+      <h1 class="title" style="color:white;">Шашки</h1>
       <div class="scores-container">
         <div class="score-container">0</div>
         <div class="best-container">-</div>
@@ -33,21 +33,21 @@
   </div>
     <div class="stats">
         <div>
-            <label for="skillLevel">Уровень игры (1-10)</label>
+            <label for="skillLevel" style="color:white;">Уровень игры (1-10)</label>
             <input type="number" class="form-control" id="skillLevel" value="5" step="1" min="1" max="10">
             <button id="cleargame">Начать заново</button>
         </div>
       <div class="wrapper">
       <div id="player1">
-        <h3>Игрок 1 (Снизу)</h3>
+        <h3>Игрок</h3>
       </div>
       <div id="player2">
-        <h3>Игрок 2 (Сверху)</h3>
+        <h3>ИИ</h3>
       </div>
       </div>
       <div class="clearfix"></div>
       <div class="turn"></div>
-      <span id="winner"></span>
+      <span id="winner" style="display: none;"></span>
     </div>
 </body>
 </html>

@@ -23,7 +23,7 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-400 to-purple-600 min-h-screen flex items-center justify-center">
-<nav class="w-full bg-white/10  backdrop-blur-md shadow-md fixed top-0 left-2 z-20">
+<nav class="w-full bg-white/10  backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
             <div class="flex items-center gap-3">
@@ -31,7 +31,7 @@
                     <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
                 </a>
             </div>
-            <div class="flex space-x-2 md:space-x-4 ml-35">
+            <div class="flex space-x-2 md:space-x-4 ml-39">
                   <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold ">Магазин</a>
                 <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold ">Рекорды</a>
                 <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold bg-indigo-600/80">Об играх</a>

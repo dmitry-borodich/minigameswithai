@@ -8,7 +8,7 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #64b5f6, #4db6ac);
+      background: linear-gradient(135deg, #9f5fff 0%, #ff57bb 100%);
       font-family: Arial, sans-serif;
       color: #fff;
       height: 100%;
@@ -72,7 +72,7 @@
             </div>
         </div>
     </nav>
-  <div id="game-wrapper">
+  <div id="game-wrapper" class="mt-10">
       <iframe src="{{ url_for('static', filename='chess2/examples/demo.html') }}"
               title="Шахматы"
               allow="autoplay; fullscreen; gamepad"
