@@ -19,6 +19,46 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-400 to-purple-600 min-h-screen flex items-center justify-center">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+      {% for category, message in messages %}
+        <div class="toast px-6 py-3 rounded-lg shadow-lg text-base font-semibold transition-all duration-500 opacity-100
+            animate-toast-in
+            {% if category == 'success' %}bg-green-500 text-white
+            {% elif category == 'warning' %}bg-yellow-400 text-gray-900
+            {% elif category == 'danger' %}bg-red-500 text-white
+            {% else %}bg-gray-700 text-white{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+    <style>
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(50px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .animate-toast-in {
+        animation: toast-in 1s cubic-bezier(.23,1.01,.32,1) both;
+      }
+    </style>
+    <script>
+      setTimeout(() => {
+        const toast = document.getElementById('toast-container');
+        if (toast) {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 500);
+        }
+      }, 3000);
+    </script>
+  {% endif %}
+{% endwith %}
 <nav class="w-full bg-white/10 shadow-md fixed top-0 left-0 z-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
@@ -28,15 +68,15 @@
                 </a>
             </div>
             <div class="flex space-x-2 md:space-x-4 ml-35">
-                  <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold bg-indigo-600/80">Магазин</a>
-                <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Рекорды</a>
+                <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold bg-indigo-600/80">Магазин</a>
+                <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
                 <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
             </div>
             <div class="flex items-center ml-4">
                 <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
                     <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
                 </a>
-                <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ user }}</span>
+                <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ user.nickname }}</span>
             </div>
         </div>
     </div>
@@ -46,93 +86,83 @@
     <div class="bg-white/90 rounded-3xl shadow-xl p-8 md:p-12">
         <h1 class="text-3xl font-extrabold text-center text-indigo-800 mb-10">Магазин</h1>
         <div class="mb-8 text-lg text-right text-indigo-800 font-bold">
-            Ваш баланс: <span class="text-indigo-900">9999</span>
+            Ваш баланс: <span class="text-indigo-900">{{ user.balance }}</span>
             <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-6 mb-1" />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
             <!-- Аватарки -->
             <div>
                 <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Аватарки</h2>
                 <div class="grid grid-cols-1 gap-7 sm:grid-cols-2 pb-5">
-                    <!-- MOCKUP: Аватарка 1 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/cat.jfif') }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="Аватарка 1">
-                        <div class="font-semibold text-indigo-800 mb-1">Кот</div>
-                        <div class="mb-2 font-bold text-indigo-900">120
+                    {% for item in decor_items if item.type == 'avatar' %}
+                    <div class="relative flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105
+                        {% if item.id in bought_ids %} opacity-50 grayscale{% endif %}">
+                        <img src="{{ url_for('static', filename=item.image) }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="{{ item.name }}">
+                        <div class="font-semibold text-indigo-800 mb-1">{{ item.name }}</div>
+                        <div class="mb-2 font-bold text-indigo-900">{{ item.price }}
                             <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
                         </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                        {% if item.id in bought_ids %}
+                        <div class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-gray-700 bg-white/70 rounded-lg">Куплено</div>
+                        {% else %}
+                        <form method="post" action="{{ url_for('buy_decor_item', item_id=item.id) }}">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                        </form>
+                        {% endif %}
                     </div>
-                    <!-- MOCKUP: Аватарка 2 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/robot.jfif') }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="Аватарка 2">
-                        <div class="font-semibold text-indigo-800 mb-1">Робот</div>
-                        <div class="mb-2 font-bold text-indigo-900">150
-                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
-                        </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
-                    <!-- MOCKUP: Аватарка 3 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/dragon.jfif') }}" class="rounded-full h-24 w-24 border-4 border-indigo-300 mb-3 bg-white" alt="Аватарка 1">
-                        <div class="font-semibold text-indigo-800 mb-1">Дракон</div>
-                        <div class="mb-2 font-bold text-indigo-900">120
-                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
-                        </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
+
             <!-- Фоны профиля -->
             <div>
                 <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Фоны профиля</h2>
-                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2  pb-5">
-                    <!-- MOCKUP: Фон профиля 1 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/mountains.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 1">
-                        <div class="font-semibold text-indigo-800 mb-1">Горы</div>
-                        <div class="mb-2 font-bold text-indigo-900">200
-                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
+                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2 pb-5">
+                    {% for item in decor_items if item.type == 'profile_bg' %}
+                    <div class="relative flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105
+                        {% if item.id in bought_ids %} opacity-50 grayscale{% endif %}">
+                        <img src="{{ url_for('static', filename=item.image) }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="{{ item.name }}">
+                        <div class="font-semibold text-indigo-800 mb-1">{{ item.name }}</div>
+                        <div class="mb-2 font-bold text-indigo-900">{{ item.price }}
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
                         </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                        {% if item.id in bought_ids %}
+                        <div class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-gray-700 bg-white/70 rounded-lg">Куплено</div>
+                        {% else %}
+                        <form method="post" action="{{ url_for('buy_decor_item', item_id=item.id) }}">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                        </form>
+                        {% endif %}
                     </div>
-                    <!-- MOCKUP: Фон профиля 2 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/pixel art.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 2">
-                        <div class="font-semibold text-indigo-800 mb-1">Пиксель арт</div>
-                        <div class="mb-2 font-bold text-indigo-900">250
-                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
-                        </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
+
             <!-- Задние фоны -->
             <div>
                 <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Задние фоны профиля</h2>
-                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2  pb-5">
-                    <!-- MOCKUP: Задний фон 1 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/sun.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 3">
-                        <div class="font-semibold text-indigo-800 mb-1">Рассвет</div>
-                        <div class="mb-2 font-bold text-indigo-900">300
-                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
+                <div class="grid grid-cols-1 gap-7 sm:grid-cols-2 pb-5">
+                    {% for item in decor_items if item.type == 'cover_bg' %}
+                    <div class="relative flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105
+                        {% if item.id in bought_ids %} opacity-50 grayscale{% endif %}">
+                        <img src="{{ url_for('static', filename=item.image) }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="{{ item.name }}">
+                        <div class="font-semibold text-indigo-800 mb-1">{{ item.name }}</div>
+                        <div class="mb-2 font-bold text-indigo-900">{{ item.price }}
+                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1"/>
                         </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                        {% if item.id in bought_ids %}
+                        <div class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-gray-700 bg-white/70 rounded-lg">Куплено</div>
+                        {% else %}
+                        <form method="post" action="{{ url_for('buy_decor_item', item_id=item.id) }}">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
+                        </form>
+                        {% endif %}
                     </div>
-                    <!-- MOCKUP: Задний фон 2 -->
-                    <div class="flex flex-col items-center bg-white/80 rounded-xl p-4 shadow-lg transition hover:scale-105">
-                        <img src="{{ url_for('static', filename='icons/ocean.jfif') }}" class="rounded-lg h-24 w-32 border-4 border-indigo-300 mb-3 object-cover" alt="Фон 4">
-                        <div class="font-semibold text-indigo-800 mb-1">Океан</div>
-                        <div class="mb-2 font-bold text-indigo-900">350
-                            <img src="{{ url_for('static', filename='icons/coin.png') }}" class="inline h-5 mb-1" />
-                        </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-lg font-semibold mt-1">Купить</button>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
+
         </div>
     </div>
 </div>

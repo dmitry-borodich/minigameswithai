@@ -44,6 +44,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     confirmed = db.Column(db.Boolean, default=False)
+    balance = db.Column(db.Integer, default=0, nullable=False)
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,11 +57,38 @@ class Score(db.Model):
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # чей профиль
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # кто написал
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     text = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    author = db.relationship('User', foreign_keys=[author_id])
+
+class DecorItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    type = db.Column(db.String(50))
+    price = db.Column(db.Integer, nullable=False)
+    image = db.Column(db.String(200), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+
+class UserDecorItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    decor_item_id = db.Column(db.Integer, db.ForeignKey('decor_item.id'), nullable=False)
+    purchase_date = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('decor_items', lazy=True))
+    decor_item = db.relationship('DecorItem', backref=db.backref('purchased_by', lazy=True))
+
+class UserSelectedDecor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    decor_item_id = db.Column(db.Integer, db.ForeignKey('decor_item.id'), nullable=False)
+    selected_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('selected_decor', lazy=True))
+    decor_item = db.relationship('DecorItem', backref=db.backref('selected_by', lazy=True))
 
 with app.app_context():
     db.create_all()
@@ -171,6 +199,21 @@ def profile():
 
     user = User.query.filter_by(nickname=nickname).first()
 
+    bought_avatar_items = (db.session.query(DecorItem)
+                           .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
+                           .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'avatar')
+                           .all())
+    bought_profile_bg_items = (db.session.query(DecorItem)
+                               .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
+                               .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'profile_bg')
+                               .all())
+    bought_cover_bg_items = (db.session.query(DecorItem)
+                             .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
+                             .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'cover_bg')
+                             .all())
+    # Получить выбранные декоры
+    selected_decor = {sd.decor_item.type: sd.decor_item_id for sd in UserSelectedDecor.query.filter_by(user_id=user.id)}
+
     records = {}
     for game in ['2048', '15-puzzle', 'chess', 'checkers']:
         score = Score.query.filter_by(user_id=user.id, game_name=game).first()
@@ -185,30 +228,80 @@ def profile():
                 game_record[score.difficulty] = score.high_score
         records[game] = game_record
 
-    if request.method == 'POST':
-        new_nickname = request.form['nickname']
-        new_pass = request.form['new_password']
-        confirm = request.form['confirm_password']
+    comments = Comment.query.filter_by(user_id=user.id).order_by(Comment.created_at.desc()).all()
 
-        if new_pass and new_pass != confirm:
-            flash('Пароли не совпадают')
-            return render_template('profile.html', user=user, records=records)
+    return render_template('profile.html', user=user, records=records, comments=comments,
+                           bought_avatar_items=bought_avatar_items, bought_profile_bg_items=bought_profile_bg_items,
+                           bought_cover_bg_items=bought_cover_bg_items,selected_decor=selected_decor,
+                           default_avatar="icons/user.png", default_profile_bg="",default_cover_bg="")
 
-        if new_nickname != nickname:
-            if User.query.filter_by(nickname=new_nickname).first():
-                flash('Никнейм уже занят')
-                return render_template('profile.html', user=user, records=records)
-            user.nickname = new_nickname
-            session['user'] = new_nickname
 
-        if new_pass:
-            user.password = new_pass
+@app.route('/select_decor/<int:decor_item_id>', methods=['POST'])
+def select_decor(decor_item_id):
+    user = User.query.filter_by(nickname=session.get('user')).first()
 
-        db.session.commit()
-        flash('Данные обновлены', 'info')
+    decor_type = request.form.get('decor_type')
+
+    if decor_item_id == 0:
+        # стандартный вариант — просто удалить выбор этого типа
+        if not decor_type:
+            flash("Неизвестный тип оформления", "danger")
+            return redirect(url_for('profile'))
+        # Найти выбранный декор такого типа и удалить
+        old_selected = (
+            UserSelectedDecor.query
+            .join(DecorItem)
+            .filter(UserSelectedDecor.user_id == user.id, DecorItem.type == decor_type)
+            .first()
+        )
+        if old_selected:
+            db.session.delete(old_selected)
+            db.session.commit()
+        flash("Выбран стандартный вариант!", "success")
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', user=user, records=records)
+    decor_item = DecorItem.query.get(decor_item_id)
+    if not decor_item:
+        flash("Предмет не найден", "danger")
+        return redirect(url_for('profile'))
+    # Проверка: куплен ли предмет
+    if not UserDecorItem.query.filter_by(user_id=user.id, decor_item_id=decor_item_id).first():
+        flash("Сначала купите этот предмет", "warning")
+        return redirect(url_for('profile'))
+    # Снять предыдущий выбор этого типа
+    type_ = decor_item.type
+    old_selected = UserSelectedDecor.query.join(DecorItem).filter(
+        UserSelectedDecor.user_id == user.id,
+        DecorItem.type == type_
+    ).first()
+    if old_selected:
+        old_selected.decor_item_id = decor_item_id
+    else:
+        db.session.add(UserSelectedDecor(user_id=user.id, decor_item_id=decor_item_id))
+    db.session.commit()
+    flash("Выбран новый элемент оформления профиля!", "success")
+    return redirect(url_for('profile'))
+
+
+@app.route('/edit_profile', methods=['POST'])
+def edit_profile():
+    user = User.query.filter_by(nickname=session.get('user')).first()
+    nickname = request.form.get('nickname')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    if nickname:
+        user.nickname = nickname
+
+    if new_password:
+        if new_password != confirm_password:
+            flash('Пароли не совпадают', 'danger')
+            return redirect(url_for('profile'))
+        user.password = new_password
+
+    db.session.commit()
+    flash('Профиль успешно обновлен!', 'success')
+    return redirect(url_for('profile'))
 
 @app.route('/game2048')
 def game2048():
@@ -380,8 +473,10 @@ def checkers():
 
 @app.route('/shop')
 def shop():
-    user = session.get('user', 'Гость')
-    return render_template('shop.html', user=user)
+    user = User.query.filter_by(nickname=session.get('user')).first()
+    decor_items = DecorItem.query.all()
+    bought_ids = {udi.decor_item_id for udi in UserDecorItem.query.filter_by(user_id=user.id)}
+    return render_template('shop.html', user=user, decor_items=decor_items, bought_ids=bought_ids)
 
 @app.route('/records')
 def records():
@@ -452,6 +547,25 @@ def profilebyid(user_id):
         .order_by(Comment.created_at.desc())
         .all()
     )
+
+@app.route('/buy_decor_item/<int:item_id>', methods=['POST'])
+def buy_decor_item(item_id):
+    user = User.query.filter_by(nickname=session.get('user')).first()
+    item = DecorItem.query.get(item_id)
+    if not user or not item:
+        flash("Ошибка покупки", "danger")
+        return redirect(url_for('shop'))
+    if UserDecorItem.query.filter_by(user_id=user.id, decor_item_id=item.id).first():
+        flash("Вы уже купили этот предмет!", "info")
+        return redirect(url_for('shop'))
+    if user.balance < item.price:
+        flash("Недостаточно средств!", "warning")
+        return redirect(url_for('shop'))
+    user.balance -= item.price
+    db.session.add(UserDecorItem(user_id=user.id, decor_item_id=item.id))
+    db.session.commit()
+    flash(f"Вы купили: {item.name}", "success")
+    return redirect(url_for('shop'))
 
 if __name__ == '__main__':
     app.run(debug=True)
