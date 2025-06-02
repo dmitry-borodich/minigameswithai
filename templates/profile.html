@@ -63,29 +63,31 @@
     </script>
   {% endif %}
 {% endwith %}
-
-<nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
-            <div class="flex items-center gap-3">
-                <a href="{{ url_for('menu') }}" class="block">
-                    <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
-                </a>
-            </div>
-            <div class="flex space-x-2 md:space-x-4 ml-39">
-                <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Магазин</a>
-                <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
-                <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
-            </div>
-            <div class="flex items-center ml-4">
-                <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
-                    <img src="{{ url_for('static', filename=default_avatar) }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
-                </a>
-                <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ user.nickname }}</span>
+{% set nickname = user.nickname if user and user.nickname else "Гость" %}
+{% set avatar = user.avatar if user and user.avatar else "icons/user.png" %}
+    <nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('menu') }}" class="block">
+                        <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
+                    </a>
+                    <span class="hidden sm:block text-2xl font-extrabold tracking-tight">MiniGames</span>
+                </div>
+                <div class="flex space-x-2 md:space-x-4">
+                    <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Магазин</a>
+                    <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
+                    <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
+                </div>
+                <div class="flex items-center ml-4">
+                    <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
+                        <img src="{{ url_for('static', filename=avatar) }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
+                    </a>
+                    <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ nickname }}</span>
+                </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
 <div class="mx-auto px-2 sm:px-4 md:px-8 mt-24 fade-in max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
     {# Профильный блок с белым фоном или кастомным #}
@@ -121,9 +123,9 @@
                 <div class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
                     {{ user.nickname }}
                     <button id="openEditModal"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow transition cursor-pointer text-xs"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-1 mt-1 shadow transition cursor-pointer text-xs"
                         title="Редактировать профиль">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pr-0.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 4.572a2.828 2.828 0 00-4 0l-8.486 8.485a2 2 0 00-.586 1.415v3.172a2 2 0 002 2h3.172a2 2 0 001.414-.586l8.485-8.485a2.828 2.828 0 000-4z" />
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7l1 1" />
                         </svg>
@@ -325,7 +327,7 @@
             {% for comment in comments %}
               <div class="bg-indigo-50/80 rounded-xl p-4 shadow flex flex-col">
                   <div class="flex items-center gap-2 mb-1">
-                    <img src="{{ comment.author.avatar_url or url_for('static', filename=default_avatar) }}" alt="аватар" class="h-8 w-8 rounded-full border border-indigo-200 bg-white">
+                    <img src="{{ url_for('static', filename=comment.author.avatar) }}" alt="аватар" class="h-8 w-8 rounded-full border border-indigo-200 bg-white">
                     <span class="font-semibold text-indigo-800">{{ comment.author.nickname }}</span>
                     <span class="text-xs text-gray-500 ml-0.5 mt-1">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
                   </div>

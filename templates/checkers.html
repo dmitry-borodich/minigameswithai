@@ -51,27 +51,27 @@
   </style>
 </head>
 <body>
-<nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
+{% set nickname = user.nickname if user and user.nickname else "Гость" %}
+{% set avatar = user.avatar if user and user.avatar else "icons/user.png" %}
+    <nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
-            <!-- Логотип и название -->
-            <div class="flex items-center gap-3">
-                <a href="{{ url_for('menu') }}" class="block">
-                    <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
-                </a>
-            </div>
-                <!-- Навигационные вкладки -->
-                <div class="flex space-x-2 md:space-x-4 ml-35">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('menu') }}" class="block">
+                        <img src="{{ url_for('static', filename='icons/logo/logo-transparent.png') }}" alt="Логотип" class="h-16 w-16 rounded-full bg-white/30 p-1 shadow cursor-pointer transition hover:scale-105" />
+                    </a>
+                    <span class="hidden sm:block text-2xl font-extrabold tracking-tight">MiniGames</span>
+                </div>
+                <div class="flex space-x-2 md:space-x-4">
                     <a href="{{ url_for('shop') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'shop' %}bg-indigo-600/80{% endif %}">Магазин</a>
                     <a href="{{ url_for('records') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'records' %}bg-indigo-600/80{% endif %}">Рекорды</a>
                     <a href="{{ url_for('about') }}" class="px-4 py-2 rounded-lg hover:bg-indigo-500/40 transition font-semibold {% if active_tab == 'about' %}bg-indigo-600/80{% endif %}">Об играх</a>
                 </div>
-                <!-- Профиль -->
                 <div class="flex items-center ml-4">
                     <a href="{{ url_for('profile') }}" class="ml-4 profile-icon">
-                        <img src="{{ url_for('static', filename='icons/user.png') }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
+                        <img src="{{ url_for('static', filename=avatar) }}" alt="Профиль" width="48" class="rounded-full border-2 border-indigo-300 bg-white/30">
                     </a>
-                    <span class="ml-2 text-lg font-bold text-white drop-shadow hidden sm:inline">{{ user }}</span>
+                    <span class="ml-2 text-lg font-bold drop-shadow hidden sm:inline">{{ nickname }}</span>
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
@@ -38,6 +38,9 @@ def confirm_token(token, expiration=3600):
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+def utc_msk():
+    return datetime.utcnow() + timedelta(hours=3)
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nickname = db.Column(db.String(50), unique=True, nullable=False)
@@ -45,6 +48,24 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     confirmed = db.Column(db.Boolean, default=False)
     balance = db.Column(db.Integer, default=0, nullable=False)
+
+    selected_decor = db.relationship('UserSelectedDecor', backref='user', lazy='dynamic')
+
+    @property
+    def avatar(self):
+        selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'avatar').first()
+        return selected.decor_item.image if selected else url_for('static', filename='icons/user.png')
+
+
+    @property
+    def profile_bg(self):
+        selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'profile_bg').first()
+        return selected.decor_item.image if selected else None
+
+    @property
+    def cover_bg(self):
+        selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'cover_bg').first()
+        return selected.decor_item.image if selected else None
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,7 +81,7 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     text = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_msk)
 
     author = db.relationship('User', foreign_keys=[author_id])
 
@@ -77,7 +98,7 @@ class UserDecorItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     decor_item_id = db.Column(db.Integer, db.ForeignKey('decor_item.id'), nullable=False)
-    purchase_date = db.Column(db.DateTime, default=datetime.utcnow)
+    purchase_date = db.Column(db.DateTime, default=utc_msk)
     user = db.relationship('User', backref=db.backref('decor_items', lazy=True))
     decor_item = db.relationship('DecorItem', backref=db.backref('purchased_by', lazy=True))
 
@@ -85,9 +106,8 @@ class UserSelectedDecor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     decor_item_id = db.Column(db.Integer, db.ForeignKey('decor_item.id'), nullable=False)
-    selected_date = db.Column(db.DateTime, default=datetime.utcnow)
+    selected_date = db.Column(db.DateTime, default=utc_msk)
 
-    user = db.relationship('User', backref=db.backref('selected_decor', lazy=True))
     decor_item = db.relationship('DecorItem', backref=db.backref('selected_by', lazy=True))
 
 with app.app_context():
@@ -181,7 +201,8 @@ def guest():
 
 @app.route('/menu')
 def menu():
-    user = session.get('user', 'Гость')
+    nickname = session.get('user') 
+    user = User.query.filter_by(nickname=nickname).first()
     show_welcome = session.pop('show_welcome', False)
     return render_template('menu.html', user=user, show_welcome=show_welcome)
 
@@ -194,7 +215,7 @@ def logout():
 def profile():
     nickname = session.get('user')
     if not nickname or nickname == 'Гость':
-        flash('Сначала войдите в аккаунт')
+        flash('Необходимо войти в аккаунт')
         return redirect(url_for('index'))
 
     user = User.query.filter_by(nickname=nickname).first()
@@ -292,6 +313,7 @@ def edit_profile():
 
     if nickname:
         user.nickname = nickname
+        session['user'] = nickname
 
     if new_password:
         if new_password != confirm_password:
@@ -305,7 +327,8 @@ def edit_profile():
 
 @app.route('/game2048')
 def game2048():
-    nickname = session.get('user', 'Гость')
+    nickname = session.get('user')
+    user = User.query.filter_by(nickname=nickname).first()
     max_score = 0
     if nickname != 'Гость':
         user = User.query.filter_by(nickname=nickname).first()
@@ -313,7 +336,7 @@ def game2048():
             record = Score.query.filter_by(user_id=user.id, game_name='2048').first()
             if record:
                 max_score = record.high_score
-    return render_template('2048.html', user=nickname, max_score=max_score)
+    return render_template('2048.html', user=user, max_score=max_score)
 
 @app.route('/update_score', methods=['POST'])
 def update_score():
@@ -354,17 +377,20 @@ def get_high_score():
 
 @app.route('/sudoku')
 def sudoku():
-    user = session.get('user', 'Гость')
+    nickname = session.get('user') 
+    user = User.query.filter_by(nickname=nickname).first()
     return render_template('sudoku.html', user=user)
 
 @app.route('/minesweeper')
 def minesweeper():
-    user = session.get('user', 'Гость')
+    nickname = session.get('user') 
+    user = User.query.filter_by(nickname=nickname).first()
     return render_template('minesweeper.html', user=user)
 
 @app.route('/15puzzle')
 def puzzle15():
-    nickname = session.get('user', 'Гость')
+    nickname = session.get('user')
+    user = User.query.filter_by(nickname=nickname).first()
     max_score = 0
     if nickname != 'Гость':
         user = User.query.filter_by(nickname=nickname).first()
@@ -372,7 +398,7 @@ def puzzle15():
             record = Score.query.filter_by(user_id=user.id, game_name='15-puzzle').first()
             if record:
                 max_score = record.high_score
-    return render_template('15puzzle.html', max_score=max_score, user=nickname)
+    return render_template('15puzzle.html', max_score=max_score, user=user)
 
 
 @app.route('/get_best_times')
@@ -451,7 +477,8 @@ def update_minesweeper_score():
 
 @app.route('/chess')
 def chess():
-    user = session.get('user', 'Гость')
+    nickname = session.get('user') 
+    user = User.query.filter_by(nickname=nickname).first()
     return render_template('chess.html', user=user)
 
 @app.after_request
@@ -468,11 +495,17 @@ def add_csp(response):
 
 @app.route('/checkers')
 def checkers():
-    user = session.get('user', 'Гость')
+    nickname = session.get('user') 
+    user = User.query.filter_by(nickname=nickname).first()
     return render_template('checkers.html', user=user)
 
 @app.route('/shop')
 def shop():
+    nickname = session.get('user')
+    if not nickname or nickname == 'Гость':
+        flash('Необходимо войти в аккаунт')
+        return redirect(url_for('index'))
+
     user = User.query.filter_by(nickname=session.get('user')).first()
     decor_items = DecorItem.query.all()
     bought_ids = {udi.decor_item_id for udi in UserDecorItem.query.filter_by(user_id=user.id)}
@@ -480,7 +513,7 @@ def shop():
 
 @app.route('/records')
 def records():
-    top_n = 5  # Number of top scores to retrieve
+    top_n = 5
 
     server_records = {}
 
@@ -515,12 +548,14 @@ def records():
             server_records[game][difficulty] = get_top_scores(game, difficulty)
 
     nickname = session.get('user', 'Гость')
+    user = User.query.filter_by(nickname=nickname).first()
 
-    return render_template('records.html', server_records=server_records, nickname=nickname)
+    return render_template('records.html', server_records=server_records, user=user)
 
 @app.route('/about')
 def about():
-    user = session.get('user', 'Гость')
+    nickname = session.get('user') 
+    user = User.query.filter_by(nickname=nickname).first()
     return render_template('about.html', user=user)
 
 
