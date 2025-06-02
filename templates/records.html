@@ -58,15 +58,12 @@
                     <ol class="list-decimal list-inside pl-4">
                         {% if server_records[game] %}
                             {% for record in server_records[game] %}
-                                {% if nickname and record.user == nickname %}
-                                    <li class="text-red-600 font-bold">
-                                        {{ record.user }} - {{ record.score }}
-                                    </li>
-                                {% else %}
-                                    <li class="text-indigo-900 font-semibold">
-                                        {{ record.user }} - {{ record.score }}
-                                    </li>
-                                {% endif %}
+                                <li>
+                                  <a href="{{ url_for('profilebyid', user_id=record.user_id) }}"
+                                     class="{% if nickname and record.user == nickname %}text-red-600 font-bold{% else %}text-indigo-900 font-semibold{% endif %}">
+                                    {{ record.user }}
+                                  </a> - {{ record.score }}
+                                </li>
                             {% endfor %}
                         {% else %}
                             <span class="text-gray-500">Нет рекордов</span>
@@ -88,15 +85,12 @@
                     <ol class="list-decimal list-inside pl-4">
                         {% if server_records[game][difficulty] %}
                             {% for record in server_records[game][difficulty] %}
-                                {% if nickname and record.user == nickname %}
-                                    <li class="text-red-600 font-bold">
-                                        {{ record.user }} - {{ record.score }}c
-                                    </li>
-                                {% else %}
-                                    <li class="{{base_text_color}} font-semibold">
-                                        {{ record.user }} - {{ record.score }}c
-                                    </li>
-                                {% endif %}
+                                <li>
+                                  <a href="{{ url_for('profilebyid', user_id=record.user_id) }}"
+                                     class="{% if nickname and record.user == nickname %}text-red-600 font-bold{% else %}{{base_text_color}} font-semibold{% endif %}">
+                                    {{ record.user }}
+                                  </a> - {{ record.score }}c
+                                </li>
                             {% endfor %}
                         {% else %}
                             <span class="text-gray-500">Нет рекордов</span>

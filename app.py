@@ -251,10 +251,12 @@ def profile():
 
     comments = Comment.query.filter_by(user_id=user.id).order_by(Comment.created_at.desc()).all()
 
+    is_own_profile = True
+
     return render_template('profile.html', user=user, records=records, comments=comments,
                            bought_avatar_items=bought_avatar_items, bought_profile_bg_items=bought_profile_bg_items,
                            bought_cover_bg_items=bought_cover_bg_items,selected_decor=selected_decor,
-                           default_avatar="icons/user.png", default_profile_bg="",default_cover_bg="")
+                           default_avatar="icons/user.png", default_profile_bg="",default_cover_bg="", is_own_profile=is_own_profile)
 
 
 @app.route('/select_decor/<int:decor_item_id>', methods=['POST'])
@@ -532,7 +534,8 @@ def records():
             .limit(top_n)
             .all()
         )
-        return [{"score": score.high_score, "user": score.user.nickname} for score in top_scores]
+        # добавь user_id сюда!
+        return [{"score": score.high_score, "user": score.user.nickname, "user_id": score.user_id} for score in top_scores]
 
     # Fetch top scores for single games
     single_games = {'2048': desc, '15puzzle': asc, 'chess': desc, 'checkers': desc}
@@ -572,16 +575,51 @@ def add_comment(user_id):
         comment = Comment(user_id=user_id, author_id=current_user.id, text=text)
         db.session.add(comment)
         db.session.commit()
-    return redirect(url_for('profile', user_id=user_id))
+    return redirect(url_for('profilebyid', user_id=user_id))
 
 @app.route('/profile/<int:user_id>')
 def profilebyid(user_id):
     user = User.query.get_or_404(user_id)
-    comments = (
-        Comment.query.filter_by(user_id=user_id)
-        .order_by(Comment.created_at.desc())
-        .all()
-    )
+    bought_avatar_items = (db.session.query(DecorItem)
+                           .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
+                           .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'avatar')
+                           .all())
+    bought_profile_bg_items = (db.session.query(DecorItem)
+                               .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
+                               .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'profile_bg')
+                               .all())
+    bought_cover_bg_items = (db.session.query(DecorItem)
+                             .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
+                             .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'cover_bg')
+                             .all())
+    # Получить выбранные декоры
+    selected_decor = {sd.decor_item.type: sd.decor_item_id for sd in UserSelectedDecor.query.filter_by(user_id=user.id)}
+
+    records = {}
+    for game in ['2048', '15-puzzle', 'chess', 'checkers']:
+        score = Score.query.filter_by(user_id=user.id, game_name=game).first()
+        records[game] = score.high_score if score else None
+
+    # Рекорды по сложностям (minesweeper и sudoku)
+    for game in ['minesweeper', 'sudoku']:
+        scores = Score.query.filter_by(user_id=user.id, game_name=game).all()
+        game_record = {diff: None for diff in ['easy', 'medium', 'hard', 'veryHard']}
+        for score in scores:
+            if score.difficulty in game_record:
+                game_record[score.difficulty] = score.high_score
+        records[game] = game_record
+
+    comments = Comment.query.filter_by(user_id=user.id).order_by(Comment.created_at.desc()).all()
+
+    nickname = session.get('user')
+    current_user = User.query.filter_by(nickname=nickname).first()
+    is_own_profile = current_user.id == user_id
+
+    return render_template('profile.html', user=user, records=records, comments=comments,
+                           bought_avatar_items=bought_avatar_items, bought_profile_bg_items=bought_profile_bg_items,
+                           bought_cover_bg_items=bought_cover_bg_items, selected_decor=selected_decor,
+                           default_avatar="icons/user.png", default_profile_bg="", default_cover_bg="",
+                           is_own_profile=is_own_profile)
 
 @app.route('/buy_decor_item/<int:item_id>', methods=['POST'])
 def buy_decor_item(item_id):

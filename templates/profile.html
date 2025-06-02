@@ -110,6 +110,7 @@
                      alt="Аватар"
                      class="w-32 h-32 rounded-full border-4 border-indigo-400 shadow-lg object-cover bg-white">
                 <!-- Кнопка настройки профиля -->
+                {% if is_own_profile %}
                 <button id="openSettings"
                     class="absolute bottom-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow transition cursor-pointer text-xs"
                     title="Настроить оформление">
@@ -118,10 +119,12 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7l1 1" />
                     </svg>
                 </button>
+                {% endif %}
             </div>
             <div class="mt-8 text-center">
                 <div class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
                     {{ user.nickname }}
+                    {% if is_own_profile %}
                     <button id="openEditModal"
                         class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-1 mt-1 shadow transition cursor-pointer text-xs"
                         title="Редактировать профиль">
@@ -130,6 +133,7 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7l1 1" />
                         </svg>
                     </button>
+                    {% endif %}
                 </div>
                 <a href="{{ url_for('logout') }}" onclick="handleLogout(event); return false;" class="block mt-6 text-sm underline text-center">Выйти</a>
             </div>
