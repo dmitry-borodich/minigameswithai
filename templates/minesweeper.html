@@ -43,8 +43,9 @@
       display: block;
     }
   </style>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/logo/logo.png') }}">
 </head>
-<body>v
+<body>
 {% set nickname = user.nickname if user and user.nickname else "Гость" %}
 {% set avatar = user.avatar if user and user.avatar else "icons/user.png" %}
     <nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">

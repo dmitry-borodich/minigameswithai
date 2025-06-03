@@ -49,7 +49,7 @@
       display: block;
     }
   </style>
-</head>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/logo/logo.png') }}"></head>
 <body>
 {% set nickname = user.nickname if user and user.nickname else "Гость" %}
 {% set avatar = user.avatar if user and user.avatar else "icons/user.png" %}

@@ -21,6 +21,7 @@
             height: 56px;
         }
     </style>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/logo/logo.png') }}">
 </head>
 <body class="bg-gradient-to-br from-indigo-400 to-purple-600 min-h-screen flex items-center justify-center ">
 {% set nickname = user.nickname if user and user.nickname else "Гость" %}

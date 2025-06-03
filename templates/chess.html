@@ -45,6 +45,7 @@
       display: block;
     }
   </style>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/logo/logo.png') }}">
 </head>
 <body>
 {% set nickname = user.nickname if user and user.nickname else "Гость" %}
