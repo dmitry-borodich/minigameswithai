@@ -63,8 +63,13 @@
     </script>
   {% endif %}
 {% endwith %}
+{% if is_own_profile %}
 {% set nickname = user.nickname if user and user.nickname else "Гость" %}
 {% set avatar = user.avatar if user and user.avatar else "icons/user.png" %}
+{% else %}
+{% set nickname = current_user.nickname if user and user.nickname else "Гость" %}
+{% set avatar = current_user.avatar if user and user.avatar else "icons/user.png" %}
+{% endif %}
     <nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
@@ -135,7 +140,9 @@
                     </button>
                     {% endif %}
                 </div>
+                {% if is_own_profile %}
                 <a href="{{ url_for('logout') }}" onclick="handleLogout(event); return false;" class="block mt-6 text-sm underline text-center">Выйти</a>
+                {% endif %}
             </div>
         </div>
 
@@ -332,7 +339,7 @@
               <div class="bg-indigo-50/80 rounded-xl p-4 shadow flex flex-col">
                   <div class="flex items-center gap-2 mb-1">
                     <img src="{{ url_for('static', filename=comment.author.avatar) }}" alt="аватар" class="h-8 w-8 rounded-full border border-indigo-200 bg-white">
-                    <span class="font-semibold text-indigo-800">{{ comment.author.nickname }}</span>
+                    <a href="{{ url_for('profilebyid', user_id=comment.author_id) }}" class="font-semibold text-indigo-800">{{ comment.author.nickname }}</a>
                     <span class="text-xs text-gray-500 ml-0.5 mt-1">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
                   </div>
                 <div class="text-indigo-900">{{ comment.text }}</div>

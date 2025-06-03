@@ -54,7 +54,7 @@ class User(db.Model):
     @property
     def avatar(self):
         selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'avatar').first()
-        return selected.decor_item.image if selected else url_for('static', filename='icons/user.png')
+        return selected.decor_item.image if selected else 'icons/user.png'
 
 
     @property
@@ -520,7 +520,7 @@ def records():
     server_records = {}
 
     # Function to fetch top N scores for a game
-    def get_top_scores(game_name, difficulty=None, order=desc):
+    def get_top_scores(game_name, difficulty=None, order=asc):
         query = (
             Score.query
             .join(User, Score.user_id == User.id)
@@ -613,13 +613,13 @@ def profilebyid(user_id):
 
     nickname = session.get('user')
     current_user = User.query.filter_by(nickname=nickname).first()
-    is_own_profile = current_user.id == user_id
+    is_own_profile = current_user.id == user_id if current_user else False
 
     return render_template('profile.html', user=user, records=records, comments=comments,
                            bought_avatar_items=bought_avatar_items, bought_profile_bg_items=bought_profile_bg_items,
                            bought_cover_bg_items=bought_cover_bg_items, selected_decor=selected_decor,
                            default_avatar="icons/user.png", default_profile_bg="", default_cover_bg="",
-                           is_own_profile=is_own_profile)
+                           is_own_profile=is_own_profile, current_user=current_user)
 
 @app.route('/buy_decor_item/<int:item_id>', methods=['POST'])
 def buy_decor_item(item_id):
