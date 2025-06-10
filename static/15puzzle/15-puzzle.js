@@ -203,7 +203,7 @@
 
     function scramble() {
         if(state == 0) return;
-        usedHint = flase;
+        usedHint = false;
         puzzle.removeAttribute('class');
         state = 0;
 		moveCount = 0;
