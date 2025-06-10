@@ -68,8 +68,8 @@
 {% set nickname = user.nickname if user and user.nickname else "Гость" %}
 {% set avatar = user.avatar if user and user.avatar else "icons/user.png" %}
 {% else %}
-{% set nickname = current_user.nickname if user and user.nickname else "Гость" %}
-{% set avatar = current_user.avatar if user and user.avatar else "icons/user.png" %}
+{% set nickname = current_user.nickname if current_user and current_user.nickname else "Гость" %}
+{% set avatar = current_user.avatar if current_user and current_user.avatar else "icons/user.png" %}
 {% endif %}
     <nav class="w-full bg-white/10 backdrop-blur-md shadow-md fixed top-0 left-0 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
