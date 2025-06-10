@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import re
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc, asc
@@ -140,6 +141,9 @@ def login():
             (User.nickname == nickname_or_email) | (User.email == nickname_or_email)
         ).first()
 
+        if not user.confirmed:
+            flash('Ваша почта не подтверждена! Пожалуйста, проверьте свой e-mail и перейдите по ссылке для подтверждения регистрации', 'error')
+            return render_template('login.html')
         if user and user.password == password:
             session['user'] = user.nickname
             session['show_welcome'] = True
@@ -158,6 +162,22 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirm = request.form['confirm']
+
+        if not nickname or len(nickname) < 3 or len(nickname) > 12:
+            flash('Никнейм должен быть от 3 до 12 символов', 'danger')
+            return render_template('register.html', nickname=nickname, email=email)
+
+        if not re.match(r'^[A-Za-z0-9_\-]+$', nickname):
+            flash('Никнейм может содержать только буквы, цифры, _ и -', 'danger')
+            return render_template('register.html', email=email)
+
+        if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            flash('Введите корректный e-mail', 'danger')
+            return render_template('register.html', nickname=nickname)
+
+        if not password or len(password) < 6:
+            flash('Пароль не должен быть короче 6 символов', 'danger')
+            return render_template('register.html', nickname=nickname, email=email)
 
         if password != confirm:
             flash('Пароли не совпадают')
@@ -180,7 +200,38 @@ def register():
             msg = Message(
                 subject="Подтверждение регистрации",
                 recipients=[email],
-                body=f'Здравствуйте, {nickname}!\nДля подтверждения регистрации перейдите по ссылке: {confirm_url}',
+                html=f"""
+                <html>
+                <body style="background:#f6f8fa;padding:32px 0;margin:0;">
+                  <table align="center" width="440" style="background:#fff;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,0.07);padding:28px 36px;">
+                    <tr>
+                      <td align="center" style="font-family:Arial,Helvetica,sans-serif;">
+                        <img src="https://img.icons8.com/color/96/000000/verified-account.png" width="48" alt="Подтверждение" style="display:block;margin-bottom:16px;">
+                        <h2 style="color:#222;font-size:24px;margin:0 0 12px 0;">Привет, {nickname}!</h2>
+                        <p style="font-size:16px;color:#444;margin-bottom:26px;">
+                          Спасибо за регистрацию!<br>
+                          Чтобы завершить регистрацию, пожалуйста подтвердите e-mail:
+                        </p>
+                        <a href="{confirm_url}" style="
+                            display:inline-block;
+                            padding:14px 28px;
+                            background:#3CBF71;
+                            color:#fff;
+                            text-decoration:none;
+                            border-radius:6px;
+                            font-size:17px;
+                            font-weight:bold;
+                            margin-bottom:16px;">Подтвердить регистрацию</a>
+                        <p style="color:#888;font-size:13px;margin-top:18px;">
+                          Если кнопка не работает, перейдите по <a href="{confirm_url}">этой ссылке</a>.<br>
+                          Если вы не регистрировались на нашем сайте, проигнорируйте это письмо.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """,
                 charset='utf-8'
             )
             mail.send(msg)
@@ -197,15 +248,15 @@ def register():
 def confirm_email(token):
     email = confirm_token(token)
     if not email:
-        flash('Ссылка недействительна или истек срок действия.', 'error')
+        flash('Ссылка недействительна или истек срок действия', 'error')
         return redirect(url_for('login'))
     user = User.query.filter_by(email=email).first()
     if user and not user.confirmed:
         user.confirmed = True
         db.session.commit()
-        flash('Почта подтверждена! Теперь вы можете войти.', 'info')
+        flash('Почта подтверждена! Теперь вы можете войти', 'info')
     else:
-        flash('Аккаунт уже подтверждён или не найден.', 'error')
+        flash('Аккаунт уже подтверждён или не найден', 'error')
     return redirect(url_for('login'))
 
 
