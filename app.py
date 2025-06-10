@@ -7,6 +7,7 @@ from sqlalchemy import desc, asc
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from flask_migrate import Migrate
+from check_swear import SwearingCheck
 import os
 
 load_dotenv()
@@ -27,6 +28,7 @@ mail = Mail(app)
 
 s = URLSafeTimedSerializer(app.secret_key)
 
+sch = SwearingCheck()
 
 def generate_confirmation_token(email):
     return s.dumps(email, salt='email-confirm')
@@ -147,12 +149,12 @@ def login():
         if user and user.password == password:
             session['user'] = user.nickname
             session['show_welcome'] = True
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu', clear_local_storage=True))
 
         flash('Неверный никнейм/почта или пароль', 'error')
         return render_template('login.html')
 
-    return render_template('login.html', clear_local_storage=True)
+    return render_template('login.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -652,6 +654,11 @@ def add_comment(user_id):
 
     current_user = User.query.filter_by(nickname=nickname).first()
     text = request.form.get('comment_text')
+
+    if int(sch.predict(text)[0]) == 1:
+        flash('Комментарий содержит недопустимые слова.', 'danger')
+        return redirect(url_for('profilebyid', user_id=user_id))
+
     if text:
         comment = Comment(user_id=user_id, author_id=current_user.id, text=text)
         db.session.add(comment)
@@ -737,9 +744,11 @@ def game_result():
         coins = base_reward.get(data['difficulty'])
         if not data.get('win'):
             coins = int(coins * 0.1)
-            coins = int(coins * data.get('time') * 0.05)
+            coins = int(coins * data.get('time') * 0.3)
         else:
-            coins = int(coins * max(1, int(100 / data.get('time'))) * 0.5)
+            time_bonus = max(1, int(100 / data.get('time')))
+            time_bonus = 3 if time_bonus < 3 else time_bonus
+            coins = int(coins * time_bonus)
             if data['difficulty'] == 'hard':
                 coins *= 5
             elif data['difficulty'] == 'veryHard':
@@ -748,7 +757,6 @@ def game_result():
             coins = int(coins * 0.4)
 
     elif data.get('game') == 'sudoku':
-        # Базовая награда за сложность для судоку
         base_reward = {'easy': 5, 'medium': 10, 'hard': 15, 'veryHard': 20}
         coins = base_reward.get(data['difficulty'])
         
@@ -758,16 +766,14 @@ def game_result():
             time_bonus = max(1, int(300 / data.get('time')))
             time_bonus = 7 if time_bonus > 7 else time_bonus
             coins = int(coins * time_bonus * 0.3)
-            
-            # Бонус за сложность
+
             if data['difficulty'] == 'hard':
                 coins *= 2
             elif data['difficulty'] == 'veryHard':
                 coins *= 3
-        
-        # Штраф за подсказки
+
         if data.get('usedHint'):
-            coins = int(coins * 0.3)
+            coins = int(coins * 0.2)
 
     elif data.get('game') == '15-puzzle':
         coins = int(50 * max(1, int(500/data.get('moveCount'))))
