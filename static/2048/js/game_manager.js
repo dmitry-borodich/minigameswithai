@@ -4,6 +4,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
 
+  this.usedHint = false;
   this.startTiles     = 2;
 
   this.inputManager.on("move", this.move.bind(this));
@@ -15,6 +16,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 
 // Restart the game
 GameManager.prototype.restart = function () {
+  this.usedHint = false;
   this.storageManager.clearGameState();
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup(false);
@@ -110,7 +112,8 @@ GameManager.prototype.actuate = function () {
     over:       this.over,
     won:        this.won,
     bestScore:  this.storageManager.getBestScore(),
-    terminated: this.isGameTerminated()
+    terminated: this.isGameTerminated(),
+    usedHint:   this.usedHint
   });
 
 };
@@ -393,6 +396,7 @@ function expectimax(grid, depth, isPlayerTurn) {
 
 // Главная функция поиска лучшего хода через expectimax
 function findBestMoveExpectimax(grid, depth) {
+  window.gameManager.usedHint = true;
   let bestDir = -1, bestScore = -Infinity;
   for (let dir = 0; dir < 4; dir++) {
     let result = grid.testMove(dir);
@@ -406,11 +410,9 @@ function findBestMoveExpectimax(grid, depth) {
   return bestDir;
 }
 
-document.querySelector('.hint-btn').addEventListener('click', function() {
+document.querySelector('.hint-btn').addEventListener('click', function(){
   let bestMove = findBestMoveExpectimax(window.gameManager.grid, 5);
   if (bestMove !== -1) {
     window.gameManager.move(bestMove);
-  } else {
-    alert('Нет доступных ходов!');
   }
 });

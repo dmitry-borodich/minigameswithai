@@ -26,9 +26,9 @@ HTMLActuator.prototype.actuate = function (grid, metadata) {
 
     if (metadata.terminated) {
       if (metadata.over) {
-        self.message(false); // You lose
+        self.message(false, metadata.usedHint); // You lose
       } else if (metadata.won) {
-        self.message(true); // You win!
+        self.message(true, metadata.usedHint); // You win!
       }
     }
 
@@ -124,16 +124,45 @@ HTMLActuator.prototype.updateBestScore = function (bestScore) {
   this.bestContainer.textContent = bestScore;
 };
 
-HTMLActuator.prototype.message = function (won) {
+HTMLActuator.prototype.message = function (won, usedHint) {
   var type    = won ? "game-won" : "game-over";
   var message = won ? "Ты победил!" : "Игра окончена!";
 
   this.messageContainer.classList.add(type);
   this.messageContainer.getElementsByTagName("p")[0].textContent = message;
+
+  this.sendGameResult(won, this.score, usedHint);
+};
+
+HTMLActuator.prototype.sendGameResult = async function (win, score, usedHint) {
+  try {
+    const data = {
+      game: "2048",
+      win: win,
+      score: score,
+      usedHint: usedHint
+    };
+    const response = await fetch('/api/game_result', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    if (response.ok) {
+      const res = await response.json();
+      if (res.coins !== undefined) {
+        if (window.parent !== window) {
+          window.parent.postMessage(
+            { type: 'toast', message: `Вы получили ${res.coins} ${res.pluralize_word}!`, toastType: 'success' },
+            '*'
+          );
+        }
+      }
+    }
+  } catch (e) {
+  }
 };
 
 HTMLActuator.prototype.clearMessage = function () {
-  // IE only takes one value to remove at a time.
   this.messageContainer.classList.remove("game-won");
   this.messageContainer.classList.remove("game-over");
 };

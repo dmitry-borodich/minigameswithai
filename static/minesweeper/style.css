@@ -79,7 +79,8 @@
 
 #hint-btn {
   padding: 8px 14px;
-  margin: 4px 10px;
+  margin-top:4px;
+  margin-left:10px;
   font-size: 0.95rem;
   font-weight: 500;
    background-color: #2196f3;
@@ -126,8 +127,9 @@ h1.title {
 }
 
 .container1 {
-  width: 500px;
+  width: 550px;
   margin: 1% auto;
+
 }
 
 .heading {
@@ -218,7 +220,7 @@ h1.title {
   justify-content: center;
   align-items: center;
   z-index: 10;
-  pointer-events: none; /* если нужно пропускать клики */
+  pointer-events: none;
 }
 
 .message {

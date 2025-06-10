@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let width;
   let bombAmount;
+  let usedHint = false;
   let flags = 0;
   let squares = [];
   let isGameOver = false;
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => toOpen.style.boxShadow = '', 1000);
 }*/
   function logicHint() {
+    usedHint = true;
   for (let i = 0; i < squares.length; i++) {
     let sq = squares[i];
     if (!sq.classList.contains('checked')) continue;
@@ -127,7 +129,7 @@ function getNeighbors(idx) {
           localStorage.removeItem('minesweeperGameState');
           gameState = null;
         }
-
+    usedHint = false;
     currentDifficulty = level;
     updateBestTimeDisplay();
     const config = difficulties[level];
@@ -665,6 +667,7 @@ function getNeighbors(idx) {
           }, 300);
       });
 
+
       box.appendChild(playAgainBtn);
     } else {
       // При поражении можно закрыть оверлей кликом
@@ -674,6 +677,7 @@ function getNeighbors(idx) {
       });
     }
 
+    sendGameResult();
     overlay.appendChild(box);
     container.appendChild(overlay);
 
@@ -743,8 +747,33 @@ function getNeighbors(idx) {
       setTimeout(() => showGameOverOverlay(true), 500);
     }
   }
-
-  // Сохраняем состояние при закрытии страницы
+async function sendGameResult(isWin) {
+  if (seconds === 0) seconds = 1;
+  const data = {
+    game: 'minesweeper',
+    win: isWin,
+    difficulty: currentDifficulty,
+    usedHint: usedHint,
+    time: seconds
+  };
+  try {
+    const response = await fetch('/api/game_result', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    if (response.ok) {
+      const res = await response.json();
+      if (res.coins !== undefined) {
+        window.parent.postMessage(
+    { type: 'toast', message: `Вы получили ${res.coins} ${res.pluralize_word}!`, toastType: 'success' },
+    '*'
+      );
+      }
+    }
+  } catch (e) {
+  }
+}
   window.addEventListener('beforeunload', () => {
     if (!isGameOver) {
       saveGameState();

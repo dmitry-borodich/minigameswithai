@@ -1,7 +1,6 @@
 let bestScore = null;
 
 $(function() {
-  //The initial setup
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -106,6 +105,7 @@ $(function() {
     // Собираем элементы
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+    sendGameResult(isWin);
 
     // Анимация появления
     setTimeout(() => {
@@ -153,7 +153,30 @@ $(function() {
         originalRemove.call(this);
     };
 }
-
+    async function sendGameResult(isWin) {
+		  const data = {
+			game: 'checkers',
+			win: isWin,
+			skill: skill-3
+		  };
+		  try {
+			const response = await fetch('/api/game_result', {
+			  method: 'POST',
+			  headers: {'Content-Type': 'application/json'},
+			  body: JSON.stringify(data)
+			});
+			if (response.ok) {
+			  const res = await response.json();
+			  if (res.coins !== undefined) {
+			  window.parent.postMessage(
+				  { type: 'toast', message: `Вы получили ${res.coins} ${res.pluralize_word}!`, toastType: 'success' },
+				  '*'
+				);
+			  }
+			}
+		  } catch (e) {
+		  }
+    }
 function saveBestScore(score) {
         return fetch('/update_score', {
             method: 'POST',
@@ -382,7 +405,7 @@ var gameBoard = [
         if (skill > 10) skill = 10;
 
         scoreContainer.textContent = skill;
-        skill+=2;
+        skill+=3;
     },
      makeAIMove: async function() {
       if (this.playerTurn === 2 && !this.checkifAnybodyWon()) {
@@ -784,35 +807,12 @@ var gameBoard = [
     }
   }
 
-  //initialize the board
   Board.initalize();
 
   /***
    Events
    ***/
 
-  //select the piece on click if it is the player's turn
-  /*$('.piece').on("click", function () {
-    if (Board.playerTurn === 2) return;
-    var selected;
-    var isPlayersTurn = ($(this).parent().attr("class").split(' ')[0] == "player" + Board.playerTurn + "pieces");
-    if (isPlayersTurn) {
-      if (!Board.continuousjump && pieces[$(this).attr("id")].allowedtomove) {
-        if ($(this).hasClass('selected')) selected = true;
-        $('.piece').each(function (index) {
-          $('.piece').eq(index).removeClass('selected')
-        });
-        if (!selected) {
-          $(this).addClass('selected');
-        }
-      } else {
-        let exist = "jump exist for other pieces, that piece is not allowed to move"
-        let continuous = "continuous jump exist, you have to jump the same piece"
-        let message = !Board.continuousjump ? exist : continuous
-        console.log(message)
-      }
-    }
-  });*/
   $('.player1pieces, .player2pieces').on("click", ".piece", function () {
   if (Board.playerTurn === 2) return;
 

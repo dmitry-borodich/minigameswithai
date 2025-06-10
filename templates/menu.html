@@ -95,6 +95,17 @@
             </div>
         </div>
     </div>
-
+<script>
+{% if clear_local_storage %}
+    if (window.localStorage) {
+        localStorage.removeItem('15-puzzle-state');
+        localStorage.removeItem('gameState');
+        localStorage.removeItem('bestScore');
+        localStorage.removeItem('minesweeperBestTimes');
+        localStorage.removeItem('minesweeperGameState');
+        localStorage.removeItem('sudokuBestTimes');
+    }
+{% endif %}
+</script>
 </body>
 </html>

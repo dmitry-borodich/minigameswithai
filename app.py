@@ -18,16 +18,19 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'leepteen@gmail.com'
-app.config['MAIL_PASSWORD'] = 'qmbw iuru krmm gmlz'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = 'leepteen@gmail.com'
 
 mail = Mail(app)
 
 s = URLSafeTimedSerializer(app.secret_key)
 
+
 def generate_confirmation_token(email):
     return s.dumps(email, salt='email-confirm')
+
+
 def confirm_token(token, expiration=3600):
     try:
         email = s.loads(token, salt='email-confirm', max_age=expiration)
@@ -35,11 +38,14 @@ def confirm_token(token, expiration=3600):
         return False
     return email
 
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+
 def utc_msk():
     return datetime.utcnow() + timedelta(hours=3)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,7 +62,6 @@ class User(db.Model):
         selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'avatar').first()
         return selected.decor_item.image if selected else 'icons/user.png'
 
-
     @property
     def profile_bg(self):
         selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'profile_bg').first()
@@ -67,6 +72,7 @@ class User(db.Model):
         selected = self.selected_decor.join(DecorItem).filter(DecorItem.type == 'cover_bg').first()
         return selected.decor_item.image if selected else None
 
+
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -75,6 +81,7 @@ class Score(db.Model):
     difficulty = db.Column(db.String(50))
 
     user = db.relationship('User', backref=db.backref('scores', lazy=True))
+
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,6 +92,7 @@ class Comment(db.Model):
 
     author = db.relationship('User', foreign_keys=[author_id])
 
+
 class DecorItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -94,6 +102,7 @@ class DecorItem(db.Model):
     image = db.Column(db.String(200), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
+
 class UserDecorItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -101,6 +110,7 @@ class UserDecorItem(db.Model):
     purchase_date = db.Column(db.DateTime, default=utc_msk)
     user = db.relationship('User', backref=db.backref('decor_items', lazy=True))
     decor_item = db.relationship('DecorItem', backref=db.backref('purchased_by', lazy=True))
+
 
 class UserSelectedDecor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -110,12 +120,15 @@ class UserSelectedDecor(db.Model):
 
     decor_item = db.relationship('DecorItem', backref=db.backref('selected_by', lazy=True))
 
+
 with app.app_context():
     db.create_all()
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -135,7 +148,8 @@ def login():
         flash('Неверный никнейм/почта или пароль', 'error')
         return render_template('login.html')
 
-    return render_template('login.html')
+    return render_template('login.html', clear_local_storage=True)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -193,30 +207,35 @@ def confirm_email(token):
     else:
         flash('Аккаунт уже подтверждён или не найден.', 'error')
     return redirect(url_for('login'))
+
+
 @app.route('/guest')
 def guest():
     session['user'] = 'Гость'
     session['show_welcome'] = True
     return redirect(url_for('menu'))
 
+
 @app.route('/menu')
 def menu():
-    nickname = session.get('user') 
+    nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     show_welcome = session.pop('show_welcome', False)
     return render_template('menu.html', user=user, show_welcome=show_welcome)
+
 
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect(url_for('index'))
 
+
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     nickname = session.get('user')
     if not nickname or nickname == 'Гость':
         flash('Необходимо войти в аккаунт')
-        return redirect(url_for('index'))
+        return render_template('index.html')
 
     user = User.query.filter_by(nickname=nickname).first()
 
@@ -255,8 +274,9 @@ def profile():
 
     return render_template('profile.html', user=user, records=records, comments=comments,
                            bought_avatar_items=bought_avatar_items, bought_profile_bg_items=bought_profile_bg_items,
-                           bought_cover_bg_items=bought_cover_bg_items,selected_decor=selected_decor,
-                           default_avatar="icons/user.png", default_profile_bg="",default_cover_bg="", is_own_profile=is_own_profile)
+                           bought_cover_bg_items=bought_cover_bg_items, selected_decor=selected_decor,
+                           default_avatar="icons/user.png", default_profile_bg="", default_cover_bg="",
+                           is_own_profile=is_own_profile)
 
 
 @app.route('/select_decor/<int:decor_item_id>', methods=['POST'])
@@ -327,6 +347,7 @@ def edit_profile():
     flash('Профиль успешно обновлен!', 'success')
     return redirect(url_for('profile'))
 
+
 @app.route('/game2048')
 def game2048():
     nickname = session.get('user')
@@ -339,6 +360,7 @@ def game2048():
             if record:
                 max_score = record.high_score
     return render_template('2048.html', user=user, max_score=max_score)
+
 
 @app.route('/update_score', methods=['POST'])
 def update_score():
@@ -363,9 +385,9 @@ def update_score():
             if score > existing_score.high_score:
                 existing_score.high_score = score
 
-
     db.session.commit()
     return '', 204
+
 
 @app.route('/get_high_score')
 def get_high_score():
@@ -377,17 +399,20 @@ def get_high_score():
 
     return {'high_score': score.high_score if score else None}
 
+
 @app.route('/sudoku')
 def sudoku():
-    nickname = session.get('user') 
+    nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     return render_template('sudoku.html', user=user)
 
+
 @app.route('/minesweeper')
 def minesweeper():
-    nickname = session.get('user') 
+    nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     return render_template('minesweeper.html', user=user)
+
 
 @app.route('/15puzzle')
 def puzzle15():
@@ -451,7 +476,6 @@ def update_minesweeper_score():
         if not user:
             return jsonify({'error': 'User not found'}), 404
 
-        # Находим или создаем запись
         score = Score.query.filter_by(
             user_id=user.id,
             game_name=game,
@@ -459,7 +483,7 @@ def update_minesweeper_score():
         ).first()
 
         if score:
-            if time < score.high_score:  # Для сапёра меньше время = лучше
+            if time < score.high_score:
                 score.high_score = time
         else:
             new_score = Score(
@@ -477,11 +501,13 @@ def update_minesweeper_score():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/chess')
 def chess():
-    nickname = session.get('user') 
+    nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     return render_template('chess.html', user=user)
+
 
 @app.after_request
 def add_csp(response):
@@ -497,9 +523,10 @@ def add_csp(response):
 
 @app.route('/checkers')
 def checkers():
-    nickname = session.get('user') 
+    nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     return render_template('checkers.html', user=user)
+
 
 @app.route('/shop')
 def shop():
@@ -512,6 +539,7 @@ def shop():
     decor_items = DecorItem.query.all()
     bought_ids = {udi.decor_item_id for udi in UserDecorItem.query.filter_by(user_id=user.id)}
     return render_template('shop.html', user=user, decor_items=decor_items, bought_ids=bought_ids)
+
 
 @app.route('/records')
 def records():
@@ -535,7 +563,8 @@ def records():
             .all()
         )
         # добавь user_id сюда!
-        return [{"score": score.high_score, "user": score.user.nickname, "user_id": score.user_id} for score in top_scores]
+        return [{"score": score.high_score, "user": score.user.nickname, "user_id": score.user_id} for score in
+                top_scores]
 
     # Fetch top scores for single games
     single_games = {'2048': desc, '15puzzle': asc, 'chess': desc, 'checkers': desc}
@@ -555,9 +584,10 @@ def records():
 
     return render_template('records.html', server_records=server_records, user=user)
 
+
 @app.route('/about')
 def about():
-    nickname = session.get('user') 
+    nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     return render_template('about.html', user=user)
 
@@ -577,6 +607,7 @@ def add_comment(user_id):
         db.session.commit()
     return redirect(url_for('profilebyid', user_id=user_id))
 
+
 @app.route('/profile/<int:user_id>')
 def profilebyid(user_id):
     user = User.query.get_or_404(user_id)
@@ -592,7 +623,7 @@ def profilebyid(user_id):
                              .join(UserDecorItem, UserDecorItem.decor_item_id == DecorItem.id)
                              .filter(UserDecorItem.user_id == user.id, DecorItem.type == 'cover_bg')
                              .all())
-    # Получить выбранные декоры
+
     selected_decor = {sd.decor_item.type: sd.decor_item_id for sd in UserSelectedDecor.query.filter_by(user_id=user.id)}
 
     records = {}
@@ -621,6 +652,7 @@ def profilebyid(user_id):
                            default_avatar="icons/user.png", default_profile_bg="", default_cover_bg="",
                            is_own_profile=is_own_profile, current_user=current_user)
 
+
 @app.route('/buy_decor_item/<int:item_id>', methods=['POST'])
 def buy_decor_item(item_id):
     user = User.query.filter_by(nickname=session.get('user')).first()
@@ -639,6 +671,87 @@ def buy_decor_item(item_id):
     db.session.commit()
     flash(f"Вы купили: {item.name}", "success")
     return redirect(url_for('shop'))
+
+
+@app.route('/api/game_result', methods=['POST'])
+def game_result():
+    nickname = session.get('user')
+    if not nickname or nickname == 'Гость':
+        return
+
+    data = request.json
+
+    if data.get('game') == 'minesweeper':
+        base_reward = {'easy': 3, 'medium': 8, 'hard': 20, 'veryHard': 30}
+        coins = base_reward.get(data['difficulty'])
+        if not data.get('win'):
+            coins = int(coins * 0.1)
+            coins = int(coins * data.get('time') * 0.05)
+        else:
+            coins = int(coins * max(1, int(100 / data.get('time'))) * 0.5)
+            if data['difficulty'] == 'hard':
+                coins *= 5
+            elif data['difficulty'] == 'veryHard':
+                coins *= 10
+        if data.get('usedHint'):
+            coins = int(coins * 0.4)
+
+    elif data.get('game') == 'sudoku':
+        # Базовая награда за сложность для судоку
+        base_reward = {'easy': 5, 'medium': 10, 'hard': 15, 'veryHard': 20}
+        coins = base_reward.get(data['difficulty'])
+        
+        if not data.get('win'):
+            coins = int(coins * 0.1)
+        else:
+            time_bonus = max(1, int(300 / data.get('time')))
+            time_bonus = 7 if time_bonus > 7 else time_bonus
+            coins = int(coins * time_bonus * 0.3)
+            
+            # Бонус за сложность
+            if data['difficulty'] == 'hard':
+                coins *= 2
+            elif data['difficulty'] == 'veryHard':
+                coins *= 3
+        
+        # Штраф за подсказки
+        if data.get('usedHint'):
+            coins = int(coins * 0.3)
+
+    elif data.get('game') == '15-puzzle':
+        coins = int(50 * max(1, int(500/data.get('moveCount'))))
+        if data.get('usedHint'):
+            coins = int(coins * 0.5)
+
+    elif data.get('game') == '2048':
+        coins = int(data.get('score')/100)
+        if data.get('usedHint'):
+            coins = int(coins * 0.5)
+        if data.get('win'):
+            coins = 500
+    elif data.get('game') == 'chess':
+        coins = int(data.get('elo')/20)
+        if not data.get('win'):
+            coins = int(coins * 0.3)
+    elif data.get('game') == 'checkers':
+        coins = int(data.get('skill'))
+        if data.get('win'):
+            coins *= 5
+
+    user = User.query.filter_by(nickname=session.get('user')).first()
+    user.balance += coins
+    db.session.commit()
+
+    n = abs(int(coins))
+    if n % 10 == 1 and n % 100 != 11:
+        pluralize_word = "монету"
+    elif n % 10 in [2, 3, 4] and n % 100 not in [12, 13, 14]:
+        pluralize_word = "монеты"
+    else:
+        pluralize_word = "монет"
+
+    return jsonify({'coins': coins, 'pluralize_word': pluralize_word})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

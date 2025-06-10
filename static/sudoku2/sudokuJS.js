@@ -31,6 +31,7 @@
 
 		  const timeDisplay = document.querySelector('#time');
   		const bestContainer = document.querySelector('.best-container');
+		  let usedHint = false;
 		  let timer;
 		let seconds = 0;
 		let loadedBestTimes = {
@@ -1288,7 +1289,7 @@
 		var effectedCells = false;
 
 		var solveFn = function(i){
-			//log(i);
+			usedHint = true;
 			if(boardFinished) {
 				if(!gradingMode) {
 					clearInterval(timer);
@@ -1296,12 +1297,6 @@
 					//log("finished!");
 					//log("usedStrats:")
 					//log(usedStrategies);
-					const overlay = document.querySelector('.game-overlay');
-					if (overlay) {
-					  overlay.style.opacity = '0';
-					  setTimeout(() => overlay.remove(), 300);
-					}
-					setTimeout(() => showGameOverOverlay(true), 100);
 					//callback
 					if(typeof opts.boardFinishedFn === "function"){
 						opts.boardFinishedFn({
@@ -1310,7 +1305,7 @@
 					}
 				}
 
-				return false; //we're done!
+				return false;
 
 			} else if (solveMode === SOLVE_MODE_STEP){
 				//likely that we're updating twice if !candidatesShowing && !onlyUpdatedCandidates,
@@ -1720,6 +1715,7 @@
     // requires that a board for boardSize has already been initiated
 		var generateBoard = function(diff, callback){
 			const overlay = document.querySelector('.game-overlay');
+			usedHint = false;
 		if (overlay) {
 		  overlay.style.opacity = '0';
 		  setTimeout(() => overlay.remove(), 300);
@@ -2108,6 +2104,7 @@
 		box.appendChild(playAgainBtn);
 		overlay.appendChild(box);
 		container.appendChild(overlay);
+		sendGameResult(isWin);
 
 		// Анимация появления
 		setTimeout(() => {
@@ -2146,6 +2143,34 @@
 			originalRemove.call(this);
 		};
 	  }
+	  async function sendGameResult(isWin) {
+		  if(seconds===0) seconds = 1;
+
+		  const data = {
+			game: 'sudoku',
+			win: isWin,
+			difficulty: currentDifficulty,
+			usedHint: usedHint,
+			time: seconds,
+		  };
+		  try {
+			const response = await fetch('/api/game_result', {
+			  method: 'POST',
+			  headers: {'Content-Type': 'application/json'},
+			  body: JSON.stringify(data)
+			});
+			if (response.ok) {
+			  const res = await response.json();
+			  if (res.coins !== undefined) {
+			  window.parent.postMessage(
+				  { type: 'toast', message: `Вы получили ${res.coins} ${res.pluralize_word}!`, toastType: 'success' },
+				  '*'
+				);
+			  }
+			}
+		  } catch (e) {
+		  }
+		}
 
 		return {
 			solveAll : solveAll,

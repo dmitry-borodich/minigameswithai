@@ -257,6 +257,7 @@ function engineGame(options) {
     // Собираем элементы
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+    sendGameResult(isWin);
 
     // Анимация появления
     setTimeout(() => {
@@ -305,6 +306,30 @@ function engineGame(options) {
     };
 }
 
+    async function sendGameResult(isWin) {
+      const data = {
+        game: 'chess',
+        win: isWin,
+        elo: fixedElo
+      };
+      try {
+        const response = await fetch('/api/game_result', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        if (response.ok) {
+          const res = await response.json();
+          if (res.coins !== undefined) {
+          window.parent.postMessage(
+              { type: 'toast', message: `Вы получили ${res.coins} ${res.pluralize_word}!`, toastType: 'success' },
+              '*'
+            );
+          }
+        }
+      } catch (e) {
+      }
+    }
 function saveBestScore(score) {
         return fetch('/update_score', {
             method: 'POST',
@@ -454,7 +479,7 @@ function saveBestScore(score) {
             game.reset();
             uciCmd('setoption name Contempt value 0');
             this.setEloLevel(400);
-            uciCmd('setoption name King Safety value 0'); /// Agressive 100 (it's now symetric)
+            uciCmd('setoption name King Safety value 0');
         },
         loadPgn: function(pgn) { game.load_pgn(pgn); },
         setPlayerColor: function(color) {
@@ -463,7 +488,6 @@ function saveBestScore(score) {
         },
         setEloLevel: function(newElo) {
         if (fixedElo !== null) {
-            console.log("ELO уже зафиксировано. Изменения не применяются.");
             return;
         }
         let skill, depth, err_prob, max_err;

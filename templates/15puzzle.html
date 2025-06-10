@@ -79,6 +79,41 @@
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-scripts allow-modals">
       </iframe>
   </div>
+ <script>
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'toast') {
+        showToast(event.data.message, event.data.toastType || 'success');
+      }
+    });
 
+    function showToast(message, type = 'success') {
+      const id = 'toast-container';
+      let container = document.getElementById(id);
+      if (!container) {
+        container = document.createElement('div');
+        container.id = id;
+        container.style.position = 'fixed';
+        container.style.bottom = '24px';
+        container.style.right = '24px';
+        container.style.zIndex = '9999';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '12px';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'toast px-6 py-3 rounded-lg shadow-lg font-semibold transition-all duration-500 opacity-100';
+      toast.style.background = '#22c55e'
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+      }, 3000);
+    }
+  </script>
 </body>
 </html>

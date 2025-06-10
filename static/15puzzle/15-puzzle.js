@@ -5,6 +5,7 @@
     var moveCount = 0;
     var scoreDisplay = document.querySelector('.score-container');
     var bestScore = null;
+    let usedHint = false;
 
     // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
     function getCell(row, col) {
@@ -137,6 +138,7 @@
     // ========== ОСНОВНЫЕ ФУНКЦИИ ИГРЫ ==========
     function solve() {
         if(state == 0) return;
+        usedHint = true;
 
         puzzle.innerHTML = '';
         // moveCount = 0;
@@ -201,7 +203,7 @@
 
     function scramble() {
         if(state == 0) return;
-
+        usedHint = flase;
         puzzle.removeAttribute('class');
         state = 0;
 		moveCount = 0;
@@ -339,22 +341,42 @@ function showWinOverlay() {
     box.appendChild(btn);
     overlay.appendChild(box);
 
-    // Позиционируем игровое поле как relative, если еще не позиционировано
+    sendGameResult();
+
     if (getComputedStyle(puzzle).position === 'static') {
         puzzle.style.position = 'relative';
     }
 
-    // Добавляем оверлей на поле
     puzzle.appendChild(overlay);
 
-    overlay.tabIndex = 0; // Делаем элемент фокусируемым
-    overlay.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            overlay.remove();
-        }
-    });
+    overlay.tabIndex = 0;
     overlay.focus();
 }
+
+async function sendGameResult() {
+		  const data = {
+			game: '15-puzzle',
+			usedHint: usedHint,
+			moveCount: moveCount
+		  };
+		  try {
+			const response = await fetch('/api/game_result', {
+			  method: 'POST',
+			  headers: {'Content-Type': 'application/json'},
+			  body: JSON.stringify(data)
+			});
+			if (response.ok) {
+			  const res = await response.json();
+			  if (res.coins !== undefined) {
+			  window.parent.postMessage(
+				  { type: 'toast', message: `Вы получили ${res.coins} ${res.pluralize_word}!`, toastType: 'success' },
+				  '*'
+				);
+			  }
+			}
+		  } catch (e) {
+		  }
+		}
 
 function bfsBestMove(board, empty, depth) {
     const queue = [];
