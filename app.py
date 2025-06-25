@@ -149,6 +149,7 @@ def login():
         if user and user.password == password:
             session['user'] = user.nickname
             session['show_welcome'] = True
+            session['clear_local_storage'] = True
             return redirect(url_for('menu'))
 
         flash('Неверный никнейм/почта или пароль', 'error')
@@ -266,6 +267,7 @@ def confirm_email(token):
 def guest():
     session['user'] = 'Гость'
     session['show_welcome'] = True
+    session['clear_local_storage'] = True
     return redirect(url_for('menu'))
 
 
@@ -274,7 +276,8 @@ def menu():
     nickname = session.get('user')
     user = User.query.filter_by(nickname=nickname).first()
     show_welcome = session.pop('show_welcome', False)
-    return render_template('menu.html', user=user, show_welcome=show_welcome, clear_local_storage=True)
+    clear_local_storage = session.pop('clear_local_storage', False)
+    return render_template('menu.html', user=user, show_welcome=show_welcome, clear_local_storage = clear_local_storage)
 
 
 @app.route('/logout')
