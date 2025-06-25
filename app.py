@@ -740,16 +740,21 @@ def game_result():
     data = request.json
 
     if data.get('game') == 'minesweeper':
-        base_reward = {'easy': 3, 'medium': 8, 'hard': 20, 'veryHard': 30}
+        base_reward = {'easy': 5, 'medium': 10, 'hard': 20, 'veryHard': 30}
         coins = base_reward.get(data['difficulty'])
         if not data.get('win'):
             coins = int(coins * 0.1)
             coins = int(coins * data.get('time') * 0.3)
         else:
-            time_bonus = max(1, int(100 / data.get('time')))
+            time_bonus = max(1, int(300 / data.get('time')))
             time_bonus = 3 if time_bonus < 3 else time_bonus
+            time_bonus = 10 if time_bonus > 10 else time_bonus
             coins = int(coins * time_bonus)
-            if data['difficulty'] == 'hard':
+            if data['difficulty'] == 'easy':
+                coins += 8
+            elif data['difficulty'] == 'medium':
+                coins += 15
+            elif data['difficulty'] == 'hard':
                 coins *= 5
             elif data['difficulty'] == 'veryHard':
                 coins *= 10
