@@ -659,7 +659,7 @@ def add_comment(user_id):
     text = request.form.get('comment_text')
 
     if int(sch.predict(text)[0]) == 1:
-        flash('Комментарий содержит недопустимые слова.', 'danger')
+        flash('Комментарий содержит недопустимые слова', 'danger')
         return redirect(url_for('profilebyid', user_id=user_id))
 
     if text:
